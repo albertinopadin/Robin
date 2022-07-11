@@ -23,15 +23,17 @@ namespace Robin
 
         private async void btn_download_Click(object sender, EventArgs e)
         {
-            var yt = YouTube.Default;
+            //var yt = YouTube.Default;
+            var yt = new FastYouTube();
             //var videos = yt.GetAllVideos(textBox_videoURL.Text);
             var videos = yt.GetAllVideosAsync(textBox_videoURL.Text).GetAwaiter().GetResult();
 
-            var maxResVideo = videos.First(v => v.Resolution == videos.Max(j => j.Resolution));
-            label_videoTitle.Text = maxResVideo.Title;
-            label_videoExtension.Text = maxResVideo.FileExtension;
-            label_videoResolution.Text = maxResVideo.Resolution.ToString();
-            label_maxBitrate.Text = maxResVideo.AudioBitrate.ToString();
+            //var video = videos.First(v => v.Resolution == videos.Max(j => j.Resolution));
+            var video = yt.GetVideo(textBox_videoURL.Text);
+            label_videoTitle.Text = video.Title;
+            label_videoExtension.Text = video.FileExtension;
+            label_videoResolution.Text = video.Resolution.ToString();
+            label_maxBitrate.Text = video.AudioBitrate.ToString();
 
             foreach (var vi in videos)
             {
@@ -47,11 +49,25 @@ namespace Robin
             //File.WriteAllBytes(@"C:\Users\albertinopadin\Videos\" + maxResVideo.FullName, contents);
 
             var baseFilePath = @"C:\Users\albertinopadin\Videos\";
-            downloadVideo(baseFilePath, maxResVideo);
+            downloadVideo(baseFilePath, video, yt);
         }
 
-        private async void downloadVideo(string downloadFolder, YouTubeVideo video)
+        private async void downloadVideo(string downloadFolder, YouTubeVideo video, FastYouTube youTube)
         {
+            Console.WriteLine("Download Started");
+            await youTube.CreateDownloadAsync(
+                new Uri(video.Uri),
+                Path.Combine(downloadFolder, video.FullName),
+                new Progress<Tuple<long, long>>((Tuple<long, long> v) =>
+                {
+                    var percent = (int)((v.Item1 * 100) / v.Item2);
+                    Console.WriteLine("Progress: " + percent);
+                    progressBarDownload.Value = percent;
+                    progressBarDownload.Update();
+                }));
+            Console.WriteLine("Download Complete");
+
+            /*
             long? totalBytes = 0;
             var httpClientHandler = new HttpClientHandler()
             {
@@ -89,7 +105,7 @@ namespace Robin
                     }
                     Console.WriteLine("Download Complete");
                 }
-            }
+            } */
         }
     }
 }
