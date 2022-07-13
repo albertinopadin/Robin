@@ -10,8 +10,11 @@ using System.Windows.Forms;
 using System.IO;
 using System.Net.Http;
 using FFMpegCore;
-
 using VideoLibrary;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
+using YoutubeExplode.Converter;
+
 
 namespace Robin
 {
@@ -26,8 +29,43 @@ namespace Robin
 
         private async void btn_download_Click(object sender, EventArgs e)
         {
+            //await downloadBestVideo_libVideo(textBox_videoURL.Text);
+
+            await downloadBestVideo_Explode(textBox_videoURL.Text);
+        }
+
+        private async Task downloadBestVideo_Explode(string videoUrl)
+        {
+            var youtube = new YoutubeClient();
+            
+            var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
+
+            var maxVideoQualityMuxedStreamInfo = streamManifest.GetMuxedStreams().GetWithHighestVideoQuality();
+
+            Console.WriteLine($"maxVideoQualityMuxedManifest: {maxVideoQualityMuxedStreamInfo.ToString()}");
+
+            var videoInfo = await youtube.Videos.GetAsync(videoUrl);
+
+            label_videoTitle.Text = videoInfo.Title;
+            label_videoExtension.Text = maxVideoQualityMuxedStreamInfo.VideoCodec.ToString();
+            label_videoResolution.Text = maxVideoQualityMuxedStreamInfo.VideoResolution.ToString();
+            label_maxBitrate.Text = maxVideoQualityMuxedStreamInfo.Bitrate.ToString();
+
+            await downloadVideo_Explode(youtube, videoUrl, videoInfo);
+        }
+
+        private async Task downloadVideo_Explode(YoutubeClient youtube, string videoUrl, YoutubeExplode.Videos.Video videoInfo)
+        {
+            Console.WriteLine("[Explode] Download Started");
+            string videoPath = Path.Combine(baseFilePath, videoInfo.Title);
+            await youtube.Videos.DownloadAsync(videoUrl, videoPath);
+            Console.WriteLine("[Explode] Download Complete");
+        }
+
+        private async Task downloadBestVideo_libVideo(string videoUrl)
+        {
             var yt = new FastYouTube();
-            var videos = yt.GetAllVideosAsync(textBox_videoURL.Text).GetAwaiter().GetResult();
+            var videos = yt.GetAllVideosAsync(videoUrl).GetAwaiter().GetResult();
 
             var videosWithAudio = videos.Where(v => v.Resolution > 0 && v.AudioBitrate > 0)
                                         .OrderByDescending(t => t.Resolution)
@@ -50,7 +88,7 @@ namespace Robin
                 Console.WriteLine("\n");
             }
 
-            await downloadVideo(yt,
+            await downloadVideo_libVideo(yt,
                                 maxResWithAudio,
                                 baseFilePath,
                                 new Progress<Tuple<long, long>>((Tuple<long, long> v) =>
@@ -61,17 +99,17 @@ namespace Robin
                                 }));
         }
 
-        private async Task downloadVideo(FastYouTube youTube, 
+        private async Task downloadVideo_libVideo(FastYouTube youTube, 
                                          YouTubeVideo video, 
                                          string downloadFolder,
                                          IProgress<Tuple<long, long>> progress)
         {
-            Console.WriteLine("Download Started");
+            Console.WriteLine("[libVideo] Download Started");
             await youTube.CreateDownloadAsync(
                 new Uri(video.Uri),
                 Path.Combine(downloadFolder, video.FullName),
                 progress);
-            Console.WriteLine("Download Complete");
+            Console.WriteLine("[libVideo] Download Complete");
         }
     }
 }
