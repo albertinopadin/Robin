@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RobinForm));
             this.textBox_videoURL = new System.Windows.Forms.TextBox();
             this.serviceController1 = new System.ServiceProcess.ServiceController();
             this.label1 = new System.Windows.Forms.Label();
@@ -46,10 +47,11 @@
             // 
             // textBox_videoURL
             // 
-            this.textBox_videoURL.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox_videoURL.Location = new System.Drawing.Point(212, 17);
+            this.textBox_videoURL.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox_videoURL.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox_videoURL.Location = new System.Drawing.Point(232, 17);
             this.textBox_videoURL.Name = "textBox_videoURL";
-            this.textBox_videoURL.Size = new System.Drawing.Size(1083, 49);
+            this.textBox_videoURL.Size = new System.Drawing.Size(1063, 44);
             this.textBox_videoURL.TabIndex = 0;
             // 
             // label1
@@ -64,9 +66,9 @@
             // 
             // btn_download
             // 
-            this.btn_download.Location = new System.Drawing.Point(1301, 17);
+            this.btn_download.Location = new System.Drawing.Point(1301, 12);
             this.btn_download.Name = "btn_download";
-            this.btn_download.Size = new System.Drawing.Size(149, 49);
+            this.btn_download.Size = new System.Drawing.Size(149, 55);
             this.btn_download.TabIndex = 2;
             this.btn_download.Text = "Download";
             this.btn_download.UseVisualStyleBackColor = true;
@@ -74,9 +76,9 @@
             // 
             // progressBarDownload
             // 
-            this.progressBarDownload.Location = new System.Drawing.Point(212, 92);
+            this.progressBarDownload.Location = new System.Drawing.Point(232, 84);
             this.progressBarDownload.Name = "progressBarDownload";
-            this.progressBarDownload.Size = new System.Drawing.Size(1083, 23);
+            this.progressBarDownload.Size = new System.Drawing.Size(1063, 31);
             this.progressBarDownload.TabIndex = 3;
             // 
             // label2
@@ -171,8 +173,8 @@
             // 
             // RobinForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(1462, 866);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label_maxBitrate);
@@ -187,6 +189,8 @@
             this.Controls.Add(this.btn_download);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox_videoURL);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "RobinForm";
             this.Text = "Robin";
             this.ResumeLayout(false);

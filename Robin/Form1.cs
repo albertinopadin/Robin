@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Net.Http;
+using FFMpegCore;
 
 using VideoLibrary;
 
@@ -35,7 +36,29 @@ namespace Robin
             label_videoResolution.Text = video.Resolution.ToString();
             label_maxBitrate.Text = video.AudioBitrate.ToString();
 
-            foreach (var vi in videos)
+            var maxRes = videos.First(v => v.Resolution == videos.Max(m => m.Resolution));
+            var maxBR = videos.First(v => v.AudioBitrate == videos.Max(m => m.AudioBitrate));
+
+            Console.WriteLine($"Max resolution video -> Resolution: {maxRes.Resolution}, " +
+                              $"Audio Bit Rate: {maxRes.AudioBitrate}");
+
+            Console.WriteLine($"Max audio bit rate video -> Resolution: {maxBR.Resolution}, " +
+                              $"Audio Bit Rate: {maxBR.AudioBitrate}");
+
+            var maxResWithBR = videos.FirstOrDefault(v => v.AudioBitrate > 0 && v.Resolution == videos.Max(m => m.Resolution));
+            if (maxResWithBR != null)
+            {
+                Console.WriteLine($"Max resolution video with Audio BR -> Resolution: {maxResWithBR.Resolution}, " +
+                                  $"Audio Bit Rate: {maxResWithBR.AudioBitrate}");
+            } else
+            {
+                Console.WriteLine("There is no video with max resolution AND audio bitrate!");
+            }
+
+            var videosWithAudio = videos.Where(v => v.Resolution > 0 && v.AudioBitrate > 0).ToList();
+
+            Console.WriteLine("VIdeos with Audio:");
+            foreach (var vi in videosWithAudio)
             {
                 Console.WriteLine("Video Info: ");
                 Console.WriteLine("Title: " + vi.Title);
@@ -45,14 +68,11 @@ namespace Robin
                 Console.WriteLine("\n");
             }
 
-            //byte[] contents = maxResVideo.GetBytes();
-            //File.WriteAllBytes(@"C:\Users\albertinopadin\Videos\" + maxResVideo.FullName, contents);
-
             var baseFilePath = @"C:\Users\albertinopadin\Videos\";
-            downloadVideo(baseFilePath, video, yt);
+            await downloadVideo(baseFilePath, video, yt);
         }
 
-        private async void downloadVideo(string downloadFolder, YouTubeVideo video, FastYouTube youTube)
+        private async Task downloadVideo(string downloadFolder, YouTubeVideo video, FastYouTube youTube)
         {
             Console.WriteLine("Download Started");
             await youTube.CreateDownloadAsync(
@@ -61,7 +81,7 @@ namespace Robin
                 new Progress<Tuple<long, long>>((Tuple<long, long> v) =>
                 {
                     var percent = (int)((v.Item1 * 100) / v.Item2);
-                    Console.WriteLine("Progress: " + percent);
+                    //Console.WriteLine("Progress: " + percent);
                     progressBarDownload.Value = percent;
                     progressBarDownload.Update();
                 }));
