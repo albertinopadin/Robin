@@ -47,17 +47,20 @@ namespace Robin
             var videoInfo = await youtube.Videos.GetAsync(videoUrl);
 
             label_videoTitle.Text = videoInfo.Title;
-            label_videoExtension.Text = maxVideoQualityMuxedStreamInfo.VideoCodec.ToString();
+            label_videoExtension.Text = maxVideoQualityMuxedStreamInfo.Container.Name;
             label_videoResolution.Text = maxVideoQualityMuxedStreamInfo.VideoResolution.ToString();
             label_maxBitrate.Text = maxVideoQualityMuxedStreamInfo.Bitrate.ToString();
 
-            await downloadVideo_Explode(youtube, videoUrl, videoInfo);
+            await downloadVideo_Explode(youtube, videoUrl, videoInfo, maxVideoQualityMuxedStreamInfo.Container.Name);
         }
 
-        private async Task downloadVideo_Explode(YoutubeClient youtube, string videoUrl, YoutubeExplode.Videos.Video videoInfo)
+        private async Task downloadVideo_Explode(YoutubeClient youtube, 
+                                                 string videoUrl, 
+                                                 YoutubeExplode.Videos.Video videoInfo,
+                                                 string extension)
         {
             Console.WriteLine("[Explode] Download Started");
-            string videoPath = Path.Combine(baseFilePath, videoInfo.Title);
+            string videoPath = Path.Combine(baseFilePath, $"{videoInfo.Title}.{extension}");
             await youtube.Videos.DownloadAsync(videoUrl, videoPath);
             Console.WriteLine("[Explode] Download Complete");
         }
