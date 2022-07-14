@@ -20,7 +20,7 @@ namespace Robin
 {
     public partial class RobinForm : Form
     {
-        const string baseFilePath = @"C:\Users\albertinopadin\Videos\";
+        string baseFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
 
         public RobinForm()
         {

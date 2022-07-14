@@ -296,9 +296,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ffmpeg.exe">
+    <AdditionalFiles Include="ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </AdditionalFiles>
     <Content Include="robin.ico" />
   </ItemGroup>
   <ItemGroup>
