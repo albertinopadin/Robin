@@ -29,6 +29,11 @@ namespace Robin
 
         private async void btn_download_Click(object sender, EventArgs e)
         {
+            //listBox_downloads.ItemHeight = 48;
+
+            //listView_downloads.Columns.Add("Video Name", -2, HorizontalAlignment.Left);
+            //listView_downloads.Columns.Add("Status", -2, HorizontalAlignment.Left);
+
             //await downloadBestVideo_libVideo(textBox_videoURL.Text);
 
             await downloadBestVideo_Explode(textBox_videoURL.Text);
@@ -60,9 +65,20 @@ namespace Robin
                                                  string extension)
         {
             Console.WriteLine("[Explode] Download Started");
+            listView_downloads.BeginUpdate();
+            //listView_downloads.Items.Add(new ListViewItem(new String[] { videoInfo.Title, "Downloading" }));
+            ListViewItem item1 = new ListViewItem(videoInfo.Title);
+            // Place a check mark next to the item.
+            //item1.Checked = true;
+            item1.SubItems.Add("Downloading");
+            listView_downloads.Items.Add(item1);
+            listView_downloads.EndUpdate();
+
             string videoPath = Path.Combine(baseFilePath, $"{videoInfo.Title}.{extension}");
             await youtube.Videos.DownloadAsync(videoUrl, videoPath);
             Console.WriteLine("[Explode] Download Complete");
+
+            item1.SubItems[1].Text = "Done";
         }
 
         private async Task downloadBestVideo_libVideo(string videoUrl)
