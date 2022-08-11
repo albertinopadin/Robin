@@ -14,6 +14,10 @@ using VideoLibrary;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using YoutubeExplode.Converter;
+using System.Threading;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Reflection;
 
 
 namespace Robin
@@ -21,6 +25,7 @@ namespace Robin
     public partial class RobinForm : Form
     {
         string baseFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+        YoutubeClient youtube = new YoutubeClient();
 
         public RobinForm()
         {
@@ -29,11 +34,6 @@ namespace Robin
 
         private async void btn_download_Click(object sender, EventArgs e)
         {
-            //listBox_downloads.ItemHeight = 48;
-
-            //listView_downloads.Columns.Add("Video Name", -2, HorizontalAlignment.Left);
-            //listView_downloads.Columns.Add("Status", -2, HorizontalAlignment.Left);
-
             //await downloadBestVideo_libVideo(textBox_videoURL.Text);
 
             await downloadBestVideo_Explode(textBox_videoURL.Text);
@@ -41,8 +41,7 @@ namespace Robin
 
         private async Task downloadBestVideo_Explode(string videoUrl)
         {
-            var youtube = new YoutubeClient();
-            
+            Cursor = Cursors.WaitCursor;
             var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
 
             var maxVideoQualityMuxedStreamInfo = streamManifest.GetMuxedStreams().GetWithHighestVideoQuality();
@@ -55,8 +54,21 @@ namespace Robin
             label_videoExtension.Text = maxVideoQualityMuxedStreamInfo.Container.Name;
             label_videoResolution.Text = maxVideoQualityMuxedStreamInfo.VideoResolution.ToString();
             label_maxBitrate.Text = maxVideoQualityMuxedStreamInfo.Bitrate.ToString();
+            label_size.Text = maxVideoQualityMuxedStreamInfo.Size.MegaBytes.ToString();
 
+            progressBarDownload.Maximum = (int)maxVideoQualityMuxedStreamInfo.Size.MegaBytes;
+            progressBarDownload.Step = 1;
+
+            // TODO: figure out how to make this work:
+            //if (!backgroundWorker1.IsBusy)
+            //{
+            //    backgroundWorker1.RunWorkerAsync();
+            //}
+                
             await downloadVideo_Explode(youtube, videoUrl, videoInfo, maxVideoQualityMuxedStreamInfo.Container.Name);
+            
+            progressBarDownload.Value = (int)maxVideoQualityMuxedStreamInfo.Size.MegaBytes;
+            Cursor = Cursors.Arrow;
         }
 
         private async Task downloadVideo_Explode(YoutubeClient youtube, 
@@ -66,19 +78,22 @@ namespace Robin
         {
             Console.WriteLine("[Explode] Download Started");
             listView_downloads.BeginUpdate();
-            //listView_downloads.Items.Add(new ListViewItem(new String[] { videoInfo.Title, "Downloading" }));
-            ListViewItem item1 = new ListViewItem(videoInfo.Title);
-            // Place a check mark next to the item.
-            //item1.Checked = true;
+            string validVideoTitle = makeValidVideoTitle(videoInfo.Title);
+            Console.WriteLine($"Valid video title: {validVideoTitle}");
+            ListViewItem item1 = new ListViewItem(validVideoTitle);
             item1.SubItems.Add("Downloading");
             listView_downloads.Items.Add(item1);
             listView_downloads.EndUpdate();
-
-            string videoPath = Path.Combine(baseFilePath, $"{videoInfo.Title}.{extension}");
+            string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
             await youtube.Videos.DownloadAsync(videoUrl, videoPath);
             Console.WriteLine("[Explode] Download Complete");
-
             item1.SubItems[1].Text = "Done";
+        }
+
+        private string makeValidVideoTitle(string rawVideoTitle)
+        {
+            Console.WriteLine($"Raw video title: {rawVideoTitle}");
+            return string.Concat(rawVideoTitle.Split(System.IO.Path.GetInvalidFileNameChars())).Trim();
         }
 
         private async Task downloadBestVideo_libVideo(string videoUrl)
@@ -129,6 +144,20 @@ namespace Robin
                 Path.Combine(downloadFolder, video.FullName),
                 progress);
             Console.WriteLine("[libVideo] Download Complete");
+        }
+
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        {
+            while (progressBarDownload.Value < progressBarDownload.Maximum * 0.95)
+            {
+                Thread.Sleep(1000);
+                backgroundWorker1.ReportProgress(0, null);
+            }
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progressBarDownload.PerformStep();
         }
     }
 }
