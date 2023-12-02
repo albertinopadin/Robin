@@ -46,7 +46,7 @@ namespace Robin
 
             var maxVideoQualityMuxedStreamInfo = streamManifest.GetMuxedStreams().GetWithHighestVideoQuality();
 
-            Console.WriteLine($"maxVideoQualityMuxedManifest: {maxVideoQualityMuxedStreamInfo.ToString()}");
+            Console.WriteLine($"maxVideoQualityMuxedManifest: {maxVideoQualityMuxedStreamInfo}");
 
             var videoInfo = await youtube.Videos.GetAsync(videoUrl);
 
