@@ -163,6 +163,8 @@ namespace Robin
 
         private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            Console.WriteLine("[checkForUpdatesToolStripMenuItem_Click] Application Product Version: " + 
+                System.Windows.Forms.Application.ProductVersion);
             InstallUpdateSyncWithInfo();
         }
 
@@ -176,10 +178,13 @@ namespace Robin
 
                 ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
 
+                Console.WriteLine("[InstallUpdateSyncWithInfo] Current version: " + ad.CurrentVersion);
+
+                MessageBox.Show("Application Deployment Current Version: " + ad.CurrentVersion);
+
                 try
                 {
                     info = ad.CheckForDetailedUpdate();
-
                 }
                 catch (DeploymentDownloadException dde)
                 {
@@ -238,11 +243,21 @@ namespace Robin
                                 "\n\nPlease check your network connection, or try again later. Error: " + dde);
                             return;
                         }
+                    } 
+                    else
+                    {
+                        MessageBox.Show("doUpdate is false");
                     }
                 }
-            } else
+                else
+                {
+                    MessageBox.Show("No updates available");
+                }
+            } 
+            else
             {
                 Console.WriteLine("[InstallUpdateSyncWithInfo] App is NOT Network Deployed");
+                MessageBox.Show("App is NOT Network Deployed");
             }
         }
     }
