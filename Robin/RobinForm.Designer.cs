@@ -49,6 +49,10 @@
             this.label_size = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // textBox_videoURL
@@ -58,7 +62,7 @@
             this.textBox_videoURL.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBox_videoURL.Cursor = System.Windows.Forms.Cursors.IBeam;
             this.textBox_videoURL.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox_videoURL.Location = new System.Drawing.Point(232, 17);
+            this.textBox_videoURL.Location = new System.Drawing.Point(232, 48);
             this.textBox_videoURL.Name = "textBox_videoURL";
             this.textBox_videoURL.Size = new System.Drawing.Size(1063, 44);
             this.textBox_videoURL.TabIndex = 0;
@@ -67,7 +71,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(12, 29);
+            this.label1.Location = new System.Drawing.Point(12, 60);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(194, 31);
             this.label1.TabIndex = 1;
@@ -76,7 +80,7 @@
             // btn_download
             // 
             this.btn_download.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_download.Location = new System.Drawing.Point(1301, 17);
+            this.btn_download.Location = new System.Drawing.Point(1301, 48);
             this.btn_download.Name = "btn_download";
             this.btn_download.Size = new System.Drawing.Size(149, 44);
             this.btn_download.TabIndex = 2;
@@ -88,7 +92,7 @@
             // 
             this.progressBarDownload.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBarDownload.Location = new System.Drawing.Point(232, 84);
+            this.progressBarDownload.Location = new System.Drawing.Point(232, 100);
             this.progressBarDownload.Name = "progressBarDownload";
             this.progressBarDownload.Size = new System.Drawing.Size(1063, 31);
             this.progressBarDownload.TabIndex = 3;
@@ -97,7 +101,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(12, 136);
+            this.label2.Location = new System.Drawing.Point(15, 152);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(150, 31);
             this.label2.TabIndex = 4;
@@ -107,7 +111,7 @@
             // 
             this.label_videoTitle.AutoSize = true;
             this.label_videoTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_videoTitle.Location = new System.Drawing.Point(226, 136);
+            this.label_videoTitle.Location = new System.Drawing.Point(229, 152);
             this.label_videoTitle.Name = "label_videoTitle";
             this.label_videoTitle.Size = new System.Drawing.Size(29, 31);
             this.label_videoTitle.TabIndex = 5;
@@ -117,7 +121,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(12, 226);
+            this.label3.Location = new System.Drawing.Point(15, 242);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(208, 31);
             this.label3.TabIndex = 6;
@@ -127,7 +131,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(12, 178);
+            this.label4.Location = new System.Drawing.Point(15, 194);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(141, 31);
             this.label4.TabIndex = 7;
@@ -137,7 +141,7 @@
             // 
             this.label_videoResolution.AutoSize = true;
             this.label_videoResolution.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_videoResolution.Location = new System.Drawing.Point(226, 226);
+            this.label_videoResolution.Location = new System.Drawing.Point(229, 242);
             this.label_videoResolution.Name = "label_videoResolution";
             this.label_videoResolution.Size = new System.Drawing.Size(29, 31);
             this.label_videoResolution.TabIndex = 8;
@@ -147,7 +151,7 @@
             // 
             this.label_videoExtension.AutoSize = true;
             this.label_videoExtension.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_videoExtension.Location = new System.Drawing.Point(226, 178);
+            this.label_videoExtension.Location = new System.Drawing.Point(229, 194);
             this.label_videoExtension.Name = "label_videoExtension";
             this.label_videoExtension.Size = new System.Drawing.Size(29, 31);
             this.label_videoExtension.TabIndex = 9;
@@ -157,7 +161,7 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(12, 272);
+            this.label5.Location = new System.Drawing.Point(15, 288);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(158, 31);
             this.label5.TabIndex = 10;
@@ -167,7 +171,7 @@
             // 
             this.label_maxBitrate.AutoSize = true;
             this.label_maxBitrate.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_maxBitrate.Location = new System.Drawing.Point(226, 272);
+            this.label_maxBitrate.Location = new System.Drawing.Point(229, 288);
             this.label_maxBitrate.Name = "label_maxBitrate";
             this.label_maxBitrate.Size = new System.Drawing.Size(29, 31);
             this.label_maxBitrate.TabIndex = 11;
@@ -177,7 +181,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(20, 84);
+            this.label6.Location = new System.Drawing.Point(23, 100);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(123, 31);
             this.label6.TabIndex = 12;
@@ -196,10 +200,10 @@
             this.listView_downloads.GridLines = true;
             this.listView_downloads.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.listView_downloads.HideSelection = false;
-            this.listView_downloads.Location = new System.Drawing.Point(26, 368);
+            this.listView_downloads.Location = new System.Drawing.Point(29, 384);
             this.listView_downloads.MultiSelect = false;
             this.listView_downloads.Name = "listView_downloads";
-            this.listView_downloads.Size = new System.Drawing.Size(1410, 470);
+            this.listView_downloads.Size = new System.Drawing.Size(1410, 557);
             this.listView_downloads.TabIndex = 13;
             this.listView_downloads.TileSize = new System.Drawing.Size(800, 78);
             this.listView_downloads.UseCompatibleStateImageBehavior = false;
@@ -219,7 +223,7 @@
             // 
             this.label_size.AutoSize = true;
             this.label_size.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_size.Location = new System.Drawing.Point(226, 316);
+            this.label_size.Location = new System.Drawing.Point(229, 332);
             this.label_size.Name = "label_size";
             this.label_size.Size = new System.Drawing.Size(29, 31);
             this.label_size.TabIndex = 15;
@@ -229,7 +233,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(12, 316);
+            this.label8.Location = new System.Drawing.Point(15, 332);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(150, 31);
             this.label8.TabIndex = 14;
@@ -239,11 +243,39 @@
             // 
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             // 
+            // menuStrip1
+            // 
+            this.menuStrip1.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
+            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(1462, 45);
+            this.menuStrip1.TabIndex = 16;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // fileToolStripMenuItem
+            // 
+            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.checkForUpdatesToolStripMenuItem});
+            this.fileToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(78, 41);
+            this.fileToolStripMenuItem.Text = "File";
+            // 
+            // checkForUpdatesToolStripMenuItem
+            // 
+            this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
+            this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
+            this.checkForUpdatesToolStripMenuItem.Text = "Check for Updates";
+            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
+            // 
             // RobinForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(1462, 866);
+            this.ClientSize = new System.Drawing.Size(1462, 953);
             this.Controls.Add(this.label_size);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.listView_downloads);
@@ -260,10 +292,14 @@
             this.Controls.Add(this.btn_download);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox_videoURL);
+            this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "RobinForm";
             this.Text = "Robin";
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -291,6 +327,9 @@
         private System.Windows.Forms.Label label_size;
         private System.Windows.Forms.Label label8;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
     }
 }
 

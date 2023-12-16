@@ -92,8 +92,8 @@
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="NiL.JS, Version=2.5.1674.0, Culture=neutral, PublicKeyToken=fa941a7c2a4de689, processorArchitecture=MSIL">
-      <HintPath>packages\NiL.JS.2.5.1674\lib\net48\NiL.JS.dll</HintPath>
+    <Reference Include="NiL.JS, Version=2.5.1677.0, Culture=neutral, PublicKeyToken=fa941a7c2a4de689, processorArchitecture=MSIL">
+      <HintPath>packages\NiL.JS.2.5.1677\lib\net48\NiL.JS.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
