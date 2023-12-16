@@ -31,6 +31,11 @@ namespace Robin
         public RobinForm()
         {
             InitializeComponent();
+
+            if (ApplicationDeployment.IsNetworkDeployed)
+            {
+                label_appVersion.Text = ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+            }
         }
 
         private async void btn_download_Click(object sender, EventArgs e)

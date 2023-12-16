@@ -52,6 +52,8 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label_appVersion = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -251,7 +253,7 @@
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1462, 45);
+            this.menuStrip1.Size = new System.Drawing.Size(1462, 49);
             this.menuStrip1.TabIndex = 16;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -261,7 +263,7 @@
             this.checkForUpdatesToolStripMenuItem});
             this.fileToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(78, 41);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(78, 45);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // checkForUpdatesToolStripMenuItem
@@ -271,11 +273,31 @@
             this.checkForUpdatesToolStripMenuItem.Text = "Check for Updates";
             this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
             // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(1163, 9);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(132, 25);
+            this.label7.TabIndex = 17;
+            this.label7.Text = "App version:";
+            // 
+            // label_appVersion
+            // 
+            this.label_appVersion.AutoSize = true;
+            this.label_appVersion.Location = new System.Drawing.Point(1302, 9);
+            this.label_appVersion.Name = "label_appVersion";
+            this.label_appVersion.Size = new System.Drawing.Size(60, 25);
+            this.label_appVersion.TabIndex = 18;
+            this.label_appVersion.Text = "0.0.0";
+            // 
             // RobinForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(1462, 953);
+            this.Controls.Add(this.label_appVersion);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.label_size);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.listView_downloads);
@@ -330,6 +352,8 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label_appVersion;
     }
 }
 
