@@ -30,7 +30,7 @@
     <UpdateUrl>https://raw.githubusercontent.com/albertinopadin/Robin/main/published/</UpdateUrl>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>7</ApplicationRevision>
+    <ApplicationRevision>8</ApplicationRevision>
     <ApplicationVersion>0.6.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -89,8 +89,8 @@
     <Reference Include="Instances, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Instances.3.0.0\lib\netstandard2.0\Instances.dll</HintPath>
     </Reference>
-    <Reference Include="libvideo, Version=3.2.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\VideoLibrary.3.2.4\lib\netstandard1.1\libvideo.dll</HintPath>
+    <Reference Include="libvideo, Version=3.2.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\VideoLibrary.3.2.5\lib\netstandard1.1\libvideo.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -274,11 +274,11 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
-    <Reference Include="YoutubeExplode, Version=6.3.16.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\YoutubeExplode.6.3.16\lib\net461\YoutubeExplode.dll</HintPath>
+    <Reference Include="YoutubeExplode, Version=6.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\YoutubeExplode.6.4.0\lib\net461\YoutubeExplode.dll</HintPath>
     </Reference>
-    <Reference Include="YoutubeExplode.Converter, Version=6.3.16.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\YoutubeExplode.Converter.6.3.16\lib\net461\YoutubeExplode.Converter.dll</HintPath>
+    <Reference Include="YoutubeExplode.Converter, Version=6.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\YoutubeExplode.Converter.6.4.0\lib\net461\YoutubeExplode.Converter.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
