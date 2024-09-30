@@ -1,23 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
+//using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
+//using System.Drawing;
 using System.Linq;
-using System.Text;
+//using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using System.Net.Http;
-using FFMpegCore;
+//using System.Net.Http;
+//using FFMpegCore;
 using VideoLibrary;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using YoutubeExplode.Converter;
 using System.Threading;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using System.Reflection;
+//using static System.Net.Mime.MediaTypeNames;
+//using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+//using System.Reflection;
 using System.Deployment.Application;
 
 
@@ -113,7 +113,7 @@ namespace Robin
                 listView_downloads.EndUpdate();
             } catch (Exception e)
             {
-                MessageBox.Show($"Exception: {e.Message}\nString: {e.ToString()}\nStacktrace:\n{e.StackTrace}");
+                MessageBox.Show($"Exception: {e.Message}\n\n{e.ToString()}");
             }
         }
 
