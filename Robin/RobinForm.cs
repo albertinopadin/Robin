@@ -90,23 +90,29 @@ namespace Robin
                                                  YoutubeExplode.Videos.Video videoInfo,
                                                  string extension)
         {
-            Console.WriteLine("[Explode] Download Started");
-            listView_downloads.BeginUpdate();
-            string validVideoTitle = makeValidVideoTitle(videoInfo.Title);
-            Console.WriteLine($"Valid video title: {validVideoTitle}");
-            ListViewItem item1 = new ListViewItem(validVideoTitle);
-            item1.SubItems.Add("Downloading");
-            listView_downloads.Items.Add(item1);
-            listView_downloads.EndUpdate();
+            try
+            {
+                Console.WriteLine("[Explode] Download Started");
+                listView_downloads.BeginUpdate();
+                string validVideoTitle = makeValidVideoTitle(videoInfo.Title);
+                Console.WriteLine($"Valid video title: {validVideoTitle}");
+                ListViewItem item1 = new ListViewItem(validVideoTitle);
+                item1.SubItems.Add("Downloading");
+                listView_downloads.Items.Add(item1);
+                listView_downloads.EndUpdate();
 
-            string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
-            await youtube.Videos.DownloadAsync(videoUrl, videoPath);
-            Console.WriteLine("[Explode] Download Complete");
+                string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
+                await youtube.Videos.DownloadAsync(videoUrl, videoPath);
+                Console.WriteLine("[Explode] Download Complete");
 
-            listView_downloads.BeginUpdate();
-            item1.SubItems[1].Text = "Done";
-            item1.SubItems.Add(videoPath);
-            listView_downloads.EndUpdate();
+                listView_downloads.BeginUpdate();
+                item1.SubItems[1].Text = "Done";
+                item1.SubItems.Add(videoPath);
+                listView_downloads.EndUpdate();
+            } catch (Exception e)
+            {
+                MessageBox.Show($"Exception: {e.Message}\nStacktrace:\n{e.StackTrace}");
+            }
         }
 
         private string makeValidVideoTitle(string rawVideoTitle)
