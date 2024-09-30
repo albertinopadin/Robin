@@ -102,7 +102,7 @@ namespace Robin
                 listView_downloads.EndUpdate();
 
                 string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
-                MessageBox.Show($"video path: {videoPath}");
+                //MessageBox.Show($"video path: {videoPath}");
 
                 await youtube.Videos.DownloadAsync(videoUrl, videoPath);
                 Console.WriteLine("[Explode] Download Complete");
