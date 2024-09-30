@@ -50,31 +50,39 @@ namespace Robin
             Cursor = Cursors.WaitCursor;
             var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
 
-            var maxVideoQualityMuxedStreamInfo = streamManifest.GetMuxedStreams().GetWithHighestVideoQuality();
+            var videoStreams = streamManifest.GetVideoStreams();
+            Console.WriteLine($"streamManifest video streams count: {videoStreams.Count()}");
 
-            Console.WriteLine($"maxVideoQualityMuxedManifest: {maxVideoQualityMuxedStreamInfo}");
+            if (videoStreams.Count() > 0)
+            {
+                var maxVideoQualityStreamInfo = videoStreams.GetWithHighestVideoQuality();
+                Console.WriteLine($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
 
-            var videoInfo = await youtube.Videos.GetAsync(videoUrl);
+                var videoInfo = await youtube.Videos.GetAsync(videoUrl);
 
-            label_videoTitle.Text = videoInfo.Title;
-            label_videoExtension.Text = maxVideoQualityMuxedStreamInfo.Container.Name;
-            label_videoResolution.Text = maxVideoQualityMuxedStreamInfo.VideoResolution.ToString();
-            label_maxBitrate.Text = maxVideoQualityMuxedStreamInfo.Bitrate.ToString();
-            label_size.Text = maxVideoQualityMuxedStreamInfo.Size.MegaBytes.ToString();
+                label_videoTitle.Text = videoInfo.Title;
+                label_videoExtension.Text = maxVideoQualityStreamInfo.Container.Name;
+                label_videoResolution.Text = maxVideoQualityStreamInfo.VideoResolution.ToString();
+                label_maxBitrate.Text = maxVideoQualityStreamInfo.Bitrate.ToString();
+                label_size.Text = maxVideoQualityStreamInfo.Size.MegaBytes.ToString();
 
-            progressBarDownload.Maximum = (int)maxVideoQualityMuxedStreamInfo.Size.MegaBytes;
-            progressBarDownload.Step = 1;
+                progressBarDownload.Maximum = (int)maxVideoQualityStreamInfo.Size.MegaBytes;
+                progressBarDownload.Step = 1;
 
-            // TODO: figure out how to make this work:
-            //if (!backgroundWorker1.IsBusy)
-            //{
-            //    backgroundWorker1.RunWorkerAsync();
-            //}
-                
-            await downloadVideo_Explode(youtube, videoUrl, videoInfo, maxVideoQualityMuxedStreamInfo.Container.Name);
-            
-            progressBarDownload.Value = (int)maxVideoQualityMuxedStreamInfo.Size.MegaBytes;
-            Cursor = Cursors.Arrow;
+                // TODO: figure out how to make this work:
+                //if (!backgroundWorker1.IsBusy)
+                //{
+                //    backgroundWorker1.RunWorkerAsync();
+                //}
+
+                await downloadVideo_Explode(youtube, videoUrl, videoInfo, maxVideoQualityStreamInfo.Container.Name);
+
+                progressBarDownload.Value = (int)maxVideoQualityStreamInfo.Size.MegaBytes;
+                Cursor = Cursors.Arrow;
+            } else
+            {
+                MessageBox.Show("No video streams found.");
+            }
         }
 
         private async Task downloadVideo_Explode(YoutubeClient youtube, 
@@ -90,10 +98,15 @@ namespace Robin
             item1.SubItems.Add("Downloading");
             listView_downloads.Items.Add(item1);
             listView_downloads.EndUpdate();
+
             string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
             await youtube.Videos.DownloadAsync(videoUrl, videoPath);
             Console.WriteLine("[Explode] Download Complete");
+
+            listView_downloads.BeginUpdate();
             item1.SubItems[1].Text = "Done";
+            item1.SubItems.Add(videoPath);
+            listView_downloads.EndUpdate();
         }
 
         private string makeValidVideoTitle(string rawVideoTitle)
