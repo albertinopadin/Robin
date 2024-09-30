@@ -81,7 +81,7 @@ namespace Robin
                 Cursor = Cursors.Arrow;
             } else
             {
-                MessageBox.Show("No video streams found.");
+                MessageBox.Show($"No video streams found for URL {videoUrl}.");
             }
         }
 
