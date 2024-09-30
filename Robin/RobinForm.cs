@@ -102,6 +102,8 @@ namespace Robin
                 listView_downloads.EndUpdate();
 
                 string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
+                MessageBox.Show($"video path: {videoPath}");
+
                 await youtube.Videos.DownloadAsync(videoUrl, videoPath);
                 Console.WriteLine("[Explode] Download Complete");
 
@@ -111,7 +113,7 @@ namespace Robin
                 listView_downloads.EndUpdate();
             } catch (Exception e)
             {
-                MessageBox.Show($"Exception: {e.Message}\nStacktrace:\n{e.StackTrace}");
+                MessageBox.Show($"Exception: {e.Message}\nString: {e.ToString()}\nStacktrace:\n{e.StackTrace}");
             }
         }
 
