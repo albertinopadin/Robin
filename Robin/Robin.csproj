@@ -2,20 +2,7 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{81098043-01A2-4914-B3A2-1953AE86A22D}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>Robin</RootNamespace>
-    <AssemblyName>Robin</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <IsWebBootstrapper>true</IsWebBootstrapper>
+    <LangVersion>default</LangVersion>
     <PublishUrl>C:\Users\albertinopadin\source\repos\Robin\published\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
@@ -30,11 +17,27 @@
     <UpdateUrl>https://raw.githubusercontent.com/albertinopadin/Robin/main/published/</UpdateUrl>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>21</ApplicationRevision>
+    <ApplicationRevision>22</ApplicationRevision>
     <ApplicationVersion>0.6.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{81098043-01A2-4914-B3A2-1953AE86A22D}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Robin</RootNamespace>
+    <AssemblyName>Robin</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <IsWebBootstrapper>true</IsWebBootstrapper>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -283,6 +286,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FastYouTube.cs" />
+    <Compile Include="LibVideoDownloader.cs" />
     <Compile Include="RobinForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -291,6 +295,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RobinUpdater.cs" />
+    <Compile Include="RobinVideoDownloader.cs" />
+    <Compile Include="RobinVideoInfo.cs" />
+    <Compile Include="YouTubeExplodeVideoDownloader.cs" />
+    <Compile Include="YouTubeVideoDownloader.cs" />
     <EmbeddedResource Include="RobinForm.resx">
       <DependentUpon>RobinForm.cs</DependentUpon>
     </EmbeddedResource>
