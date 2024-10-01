@@ -22,6 +22,23 @@ namespace Robin
             {
                 label_appVersion.Text = "NON-NETWORK DEPLOYED";
             }
+
+            listView_downloads.ItemActivate += (s, e) =>
+            {
+                ListView.SelectedListViewItemCollection selectedItems = listView_downloads.SelectedItems;
+                if (selectedItems.Count > 0)
+                {
+                    if (selectedItems.Count == 1)
+                    {
+                        ListViewItem selected = selectedItems[0];
+                        if (selected.SubItems.Count > 2)
+                        {
+                            string videoLocation = selected.SubItems[2].Text;
+                            OpenVideo(videoLocation);
+                        }
+                    }
+                }
+            };
         }
 
         private async void btn_download_Click(object sender, EventArgs e)
@@ -65,16 +82,7 @@ namespace Robin
         public void NotifyDownloadFinished(ListViewItem listItem, string videoPath)
         {
             listView_downloads.BeginUpdate();
-            //listView_downloads.HotTracking = true;
             listItem.SubItems[1].Text = "Done";
-            //LinkLabel linkLabel = new LinkLabel();
-            //linkLabel.Text = videoPath;
-            //linkLabel.AutoSize = true;
-            //linkLabel.LinkClicked += (s, e) =>
-            //{
-            //    OpenVideo(videoPath);
-            //};
-
             listItem.SubItems.Add(videoPath);
             listView_downloads.EndUpdate();
         }
