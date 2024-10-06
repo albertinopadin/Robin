@@ -33,7 +33,6 @@
             this.serviceController1 = new System.ServiceProcess.ServiceController();
             this.label1 = new System.Windows.Forms.Label();
             this.btn_download = new System.Windows.Forms.Button();
-            this.progressBarDownload = new System.Windows.Forms.ProgressBar();
             this.label2 = new System.Windows.Forms.Label();
             this.label_videoTitle = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
@@ -42,10 +41,10 @@
             this.label_videoExtension = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label_maxBitrate = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
             this.listView_downloads = new System.Windows.Forms.ListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.videoNameHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.statusHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.locationHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.label_size = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
@@ -54,7 +53,7 @@
             this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
             this.label_appVersion = new System.Windows.Forms.Label();
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.progressHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -67,7 +66,7 @@
             this.textBox_videoURL.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBox_videoURL.Location = new System.Drawing.Point(232, 48);
             this.textBox_videoURL.Name = "textBox_videoURL";
-            this.textBox_videoURL.Size = new System.Drawing.Size(1675, 44);
+            this.textBox_videoURL.Size = new System.Drawing.Size(2136, 44);
             this.textBox_videoURL.TabIndex = 0;
             // 
             // label1
@@ -83,22 +82,13 @@
             // btn_download
             // 
             this.btn_download.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_download.Location = new System.Drawing.Point(1913, 48);
+            this.btn_download.Location = new System.Drawing.Point(2374, 48);
             this.btn_download.Name = "btn_download";
             this.btn_download.Size = new System.Drawing.Size(149, 44);
             this.btn_download.TabIndex = 2;
             this.btn_download.Text = "Download";
             this.btn_download.UseVisualStyleBackColor = true;
             this.btn_download.Click += new System.EventHandler(this.btn_download_Click);
-            // 
-            // progressBarDownload
-            // 
-            this.progressBarDownload.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBarDownload.Location = new System.Drawing.Point(232, 100);
-            this.progressBarDownload.Name = "progressBarDownload";
-            this.progressBarDownload.Size = new System.Drawing.Size(1675, 31);
-            this.progressBarDownload.TabIndex = 3;
             // 
             // label2
             // 
@@ -180,16 +170,6 @@
             this.label_maxBitrate.TabIndex = 11;
             this.label_maxBitrate.Text = "?";
             // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(23, 100);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(123, 31);
-            this.label6.TabIndex = 12;
-            this.label6.Text = "Progress";
-            // 
             // listView_downloads
             // 
             this.listView_downloads.Alignment = System.Windows.Forms.ListViewAlignment.Left;
@@ -197,9 +177,10 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listView_downloads.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2,
-            this.columnHeader3});
+            this.videoNameHeader,
+            this.statusHeader,
+            this.locationHeader,
+            this.progressHeader});
             this.listView_downloads.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.listView_downloads.GridLines = true;
             this.listView_downloads.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
@@ -207,21 +188,26 @@
             this.listView_downloads.Location = new System.Drawing.Point(29, 384);
             this.listView_downloads.MultiSelect = false;
             this.listView_downloads.Name = "listView_downloads";
-            this.listView_downloads.Size = new System.Drawing.Size(2022, 733);
+            this.listView_downloads.Size = new System.Drawing.Size(2483, 733);
             this.listView_downloads.TabIndex = 13;
             this.listView_downloads.TileSize = new System.Drawing.Size(800, 78);
             this.listView_downloads.UseCompatibleStateImageBehavior = false;
             this.listView_downloads.View = System.Windows.Forms.View.Details;
             // 
-            // columnHeader1
+            // videoNameHeader
             // 
-            this.columnHeader1.Text = "Video Name";
-            this.columnHeader1.Width = 758;
+            this.videoNameHeader.Text = "Video Name";
+            this.videoNameHeader.Width = 758;
             // 
-            // columnHeader2
+            // statusHeader
             // 
-            this.columnHeader2.Text = "Status";
-            this.columnHeader2.Width = 300;
+            this.statusHeader.Text = "Status";
+            this.statusHeader.Width = 300;
+            // 
+            // locationHeader
+            // 
+            this.locationHeader.Text = "Location";
+            this.locationHeader.Width = 960;
             // 
             // label_size
             // 
@@ -255,7 +241,7 @@
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(2074, 45);
+            this.menuStrip1.Size = new System.Drawing.Size(2535, 45);
             this.menuStrip1.TabIndex = 16;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -293,22 +279,21 @@
             this.label_appVersion.TabIndex = 18;
             this.label_appVersion.Text = "0.0.0";
             // 
-            // columnHeader3
+            // progressHeader
             // 
-            this.columnHeader3.Text = "Location";
-            this.columnHeader3.Width = 960;
+            this.progressHeader.Text = "Progress";
+            this.progressHeader.Width = 460;
             // 
             // RobinForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(2074, 1129);
+            this.ClientSize = new System.Drawing.Size(2535, 1129);
             this.Controls.Add(this.label_appVersion);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label_size);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.listView_downloads);
-            this.Controls.Add(this.label6);
             this.Controls.Add(this.label_maxBitrate);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label_videoExtension);
@@ -317,7 +302,6 @@
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label_videoTitle);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.progressBarDownload);
             this.Controls.Add(this.btn_download);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox_videoURL);
@@ -340,7 +324,6 @@
         private System.ServiceProcess.ServiceController serviceController1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btn_download;
-        private System.Windows.Forms.ProgressBar progressBarDownload;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label_videoTitle;
         private System.Windows.Forms.Label label3;
@@ -349,10 +332,9 @@
         private System.Windows.Forms.Label label_videoExtension;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label_maxBitrate;
-        private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ListView listView_downloads;
-        private System.Windows.Forms.ColumnHeader columnHeader1;
-        private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ColumnHeader videoNameHeader;
+        private System.Windows.Forms.ColumnHeader statusHeader;
         private System.Windows.Forms.Label label_size;
         private System.Windows.Forms.Label label8;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
@@ -361,7 +343,8 @@
         private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label_appVersion;
-        private System.Windows.Forms.ColumnHeader columnHeader3;
+        private System.Windows.Forms.ColumnHeader locationHeader;
+        private System.Windows.Forms.ColumnHeader progressHeader;
     }
 }
 

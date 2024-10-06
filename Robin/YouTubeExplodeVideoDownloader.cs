@@ -47,9 +47,6 @@ namespace Robin
                                                      maxVideoQualityStreamInfo.Bitrate.ToString(),
                                                      maxVideoQualityStreamInfo.Size.MegaBytes.ToString()));
 
-
-                form.InitProgressBar((int)maxVideoQualityStreamInfo.Size.MegaBytes);
-
                 // TODO: figure out how to make this work:
                 //if (!backgroundWorker1.IsBusy)
                 //{
@@ -59,10 +56,9 @@ namespace Robin
                 await DownloadVideo_Explode(form, 
                                             youtube, 
                                             videoUrl, 
-                                            videoInfo, 
+                                            videoInfo,
+                                            (int)maxVideoQualityStreamInfo.Size.MegaBytes,
                                             maxVideoQualityStreamInfo.Container.Name);
-
-                form.SetProgressBarValue((int)maxVideoQualityStreamInfo.Size.MegaBytes);
             }
             else
             {
@@ -79,23 +75,20 @@ namespace Robin
                                                  YoutubeClient youtube,
                                                  string videoUrl,
                                                  YoutubeExplode.Videos.Video videoInfo,
+                                                 int videoSizeInMegabytes,
                                                  string extension)
         {
             try
             {
-                Console.WriteLine("[Explode] Download Started");
-                
                 string validVideoTitle = MakeValidVideoTitle(videoInfo.Title);
-
-                ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle);
-
+                ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle, videoSizeInMegabytes);
                 string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
-                //MessageBox.Show($"video path: {videoPath}");
+                await youtube.Videos.DownloadAsync(videoInfo.Id, videoPath, new Progress<double>(progress =>
+                {
+                    form.SetProgressBarValue(listItem, (int)(progress * videoSizeInMegabytes));
+                }));
 
-                await youtube.Videos.DownloadAsync(videoUrl, videoPath);
-                Console.WriteLine("[Explode] Download Complete");
-
-                form.NotifyDownloadFinished(listItem, videoPath);
+                form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
             }
             catch (Exception e)
             {

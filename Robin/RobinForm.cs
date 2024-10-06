@@ -3,6 +3,10 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Threading;
 using System.Deployment.Application;
+using System.Drawing;
+using System.Linq;
+using FFMpegCore.Enums;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Robin
 {
@@ -25,7 +29,7 @@ namespace Robin
 
             listView_downloads.ItemActivate += (s, e) =>
             {
-                ListView.SelectedListViewItemCollection selectedItems = listView_downloads.SelectedItems;
+                System.Windows.Forms.ListView.SelectedListViewItemCollection selectedItems = listView_downloads.SelectedItems;
                 if (selectedItems.Count > 0)
                 {
                     if (selectedItems.Count == 1)
@@ -57,33 +61,57 @@ namespace Robin
             label_size.Text = info.Size;
         }
 
-        public void InitProgressBar(int size)
+        public void SetProgressBarValue(ListViewItem item, int value)
         {
-            progressBarDownload.Maximum = size;
-            progressBarDownload.Step = 1;
+            String videoName = item.SubItems[0].Text;
+            System.Windows.Forms.ProgressBar progressBar =
+                listView_downloads.Controls.OfType<System.Windows.Forms.ProgressBar>().FirstOrDefault(i => i.Name == videoName);
+            if (progressBar != null)
+            {
+                progressBar.Value = value;
+            }
         }
 
-        public void SetProgressBarValue(int value)
-        {
-            progressBarDownload.Value = value;
-        }
-
-        public ListViewItem AddVideoToDownloadsList(string videoTitle)
+        public ListViewItem AddVideoToDownloadsList(string videoTitle, int videoSize)
         {
             listView_downloads.BeginUpdate();
             Console.WriteLine($"Valid video title: {videoTitle}");
-            ListViewItem item1 = new ListViewItem(videoTitle);
-            item1.SubItems.Add("Downloading");
-            listView_downloads.Items.Add(item1);
+            ListViewItem videoItem = new ListViewItem(videoTitle);
+            videoItem.SubItems.Add("Downloading");
+            videoItem.SubItems.Add("Download path will appear here");
+            videoItem.SubItems.Add("");
+            listView_downloads.Items.Add(videoItem);
+
+            Rectangle progressBarBounds = videoItem.SubItems[3].Bounds;
+            AddProgressBar(progressBarBounds, videoTitle, videoSize);
+
             listView_downloads.EndUpdate();
-            return item1;
+            return videoItem;
         }
 
-        public void NotifyDownloadFinished(ListViewItem listItem, string videoPath)
+        private void AddProgressBar(Rectangle bounds, string videoTitle, int videoSize)
+        {
+            System.Windows.Forms.ProgressBar progressBar = new System.Windows.Forms.ProgressBar();
+            progressBar.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+            Console.WriteLine($"Progress bar bounds: {bounds.X}, {bounds.Y}, {bounds.Width}, {bounds.Height}");
+            progressBar.Minimum = 0;
+            progressBar.Maximum = videoSize;
+            progressBar.Value = 1;
+            progressBar.Step = 1;
+            progressBar.Name = videoTitle;
+            progressBar.Visible = true;
+
+            listView_downloads.Controls.Add(progressBar);
+        }
+
+        public void NotifyDownloadFinished(ListViewItem listItem, string videoPath, int videoSize)
         {
             listView_downloads.BeginUpdate();
             listItem.SubItems[1].Text = "Done";
-            listItem.SubItems.Add(videoPath);
+            listItem.SubItems[2].Text = videoPath;
+
+            SetProgressBarValue(listItem, videoSize);
+
             listView_downloads.EndUpdate();
         }
 
@@ -94,16 +122,16 @@ namespace Robin
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            while (progressBarDownload.Value < progressBarDownload.Maximum * 0.95)
-            {
-                Thread.Sleep(1000);
-                backgroundWorker1.ReportProgress(0, null);
-            }
+            //while (progressBarDownload.Value < progressBarDownload.Maximum * 0.95)
+            //{
+            //    Thread.Sleep(1000);
+            //    backgroundWorker1.ReportProgress(0, null);
+            //}
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            progressBarDownload.PerformStep();
+            //progressBarDownload.PerformStep();
         }
 
         private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
