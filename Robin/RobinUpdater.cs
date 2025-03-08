@@ -43,7 +43,7 @@ namespace Robin
                 catch (InvalidOperationException ioe)
                 {
                     MessageBox.Show($"Application Deployment Current Version: {ad.CurrentVersion}" +
-                        "This application cannot be updated. It is likely not a ClickOnce application. " +
+                        "\n\nThis application cannot be updated. It is likely not a ClickOnce application. " +
                         $"Error: {ioe.Message}");
                     return;
                 }
@@ -55,7 +55,7 @@ namespace Robin
                     if (!info.IsUpdateRequired)
                     {
                         DialogResult dr = MessageBox.Show($"Application Deployment Current Version: {ad.CurrentVersion}" +
-                            "An update is available. Would you like to update the application now?",
+                            "\n\nAn update is available. Would you like to update the application now?",
                             "Update Available", MessageBoxButtons.OKCancel);
                         if (!(DialogResult.OK == dr))
                         {
@@ -66,7 +66,7 @@ namespace Robin
                     {
                         // Display a message that the app MUST reboot. Display the minimum required version.
                         MessageBox.Show($"Application Deployment Current Version: {ad.CurrentVersion}" +
-                            "This application has detected a mandatory update from your current " +
+                            "\n\nThis application has detected a mandatory update from your current " +
                             $"version to version {info.MinimumRequiredVersion.ToString()}. " +
                             "The application will now install the update and restart.",
                             "Update Available", MessageBoxButtons.OK,
@@ -84,7 +84,7 @@ namespace Robin
                         catch (DeploymentDownloadException dde)
                         {
                             MessageBox.Show($"Application Deployment Current Version: {ad.CurrentVersion}" +
-                                "Cannot install the latest version of the application. " +
+                                "\n\nCannot install the latest version of the application. " +
                                 "\n\nPlease check your network connection, or try again later. Error: " + dde);
                             return;
                         }

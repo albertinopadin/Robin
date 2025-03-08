@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using VideoLibrary;
 using YoutubeExplode;
 using YoutubeExplode.Converter;
 using YoutubeExplode.Videos.Streams;
@@ -16,8 +17,8 @@ namespace Robin
         YoutubeClient youtube;
         string baseFilePath;
 
-        public YouTubeExplodeVideoDownloader(string baseFilePath) 
-        { 
+        public YouTubeExplodeVideoDownloader(string baseFilePath)
+        {
             this.baseFilePath = baseFilePath;
             youtube = new YoutubeClient();
         }
@@ -41,11 +42,11 @@ namespace Robin
 
                 var videoInfo = await youtube.Videos.GetAsync(videoUrl);
 
-                form.SetVideoInfo(new RobinVideoInfo(videoInfo.Title, 
-                                                     maxVideoQualityStreamInfo.Container.Name, 
-                                                     maxVideoQualityStreamInfo.VideoResolution.ToString(), 
+                form.SetVideoInfo(new RobinVideoInfo(videoInfo.Title,
+                                                     maxVideoQualityStreamInfo.Container.Name,
+                                                     maxVideoQualityStreamInfo.VideoResolution.ToString(),
                                                      maxVideoQualityStreamInfo.Bitrate.ToString(),
-                                                     maxVideoQualityStreamInfo.Size.MegaBytes.ToString()));
+                                                     maxVideoQualityStreamInfo.Size.MegaBytes.ToString("n2")));
 
                 // TODO: figure out how to make this work:
                 //if (!backgroundWorker1.IsBusy)
@@ -53,9 +54,9 @@ namespace Robin
                 //    backgroundWorker1.RunWorkerAsync();
                 //}
 
-                await DownloadVideo_Explode(form, 
-                                            youtube, 
-                                            videoUrl, 
+                await DownloadVideo_Explode(form,
+                                            youtube,
+                                            videoUrl,
                                             videoInfo,
                                             (int)maxVideoQualityStreamInfo.Size.MegaBytes,
                                             maxVideoQualityStreamInfo.Container.Name);
@@ -78,22 +79,49 @@ namespace Robin
                                                  int videoSizeInMegabytes,
                                                  string extension)
         {
+            string validVideoTitle = MakeValidVideoTitle(videoInfo.Title);
+            ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle, videoSizeInMegabytes);
+            string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
+
             try
             {
-                string validVideoTitle = MakeValidVideoTitle(videoInfo.Title);
-                ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle, videoSizeInMegabytes);
-                string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
-                await youtube.Videos.DownloadAsync(videoInfo.Id, videoPath, new Progress<double>(progress =>
-                {
-                    form.SetProgressBarValue(listItem, (int)(progress * videoSizeInMegabytes));
-                }));
-
-                form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
+                await DownloadVideoAsync_Explode(form, listItem, youtube, videoInfo.Id, videoPath, videoSizeInMegabytes);
             }
             catch (Exception e)
             {
-                MessageBox.Show($"Exception: {e.Message}\n\n{e.ToString()}");
+                if (videoPath.Split('/').Contains("live"))
+                {
+                    try
+                    {
+                        videoPath = videoPath.Replace("/live/", "/watch?v=");
+                        Console.WriteLine("[DownloadVideo_Explode] Replaced live video path with watch: " + videoPath);
+                        await DownloadVideoAsync_Explode(form, listItem, youtube, videoInfo.Id, videoPath, videoSizeInMegabytes);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Exception: {ex.Message}\n\n{ex.ToString()}");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"Exception: {e.Message}\n\n{e.ToString()}");
+                }
             }
+        }
+
+        private async Task DownloadVideoAsync_Explode(RobinForm form,
+                                                      ListViewItem listItem,
+                                                      YoutubeClient youtube,
+                                                      string videoId,
+                                                      string videoPath,
+                                                      int videoSizeInMegabytes)
+        {
+            await youtube.Videos.DownloadAsync(videoId, videoPath, new Progress<double>(progress =>
+            {
+                form.SetProgressBarValue(listItem, (int)(progress * videoSizeInMegabytes));
+            }));
+
+            form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
         }
     }
 }

@@ -85,6 +85,8 @@ namespace Robin
             Rectangle progressBarBounds = videoItem.SubItems[3].Bounds;
             AddProgressBar(progressBarBounds, videoTitle, videoSize);
 
+            // TODO: Add cancel button
+
             listView_downloads.EndUpdate();
             return videoItem;
         }
