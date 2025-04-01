@@ -16,11 +16,43 @@ namespace Robin
     {
         YoutubeClient youtube;
         string baseFilePath;
+        string ffmpegPath;
 
         public YouTubeExplodeVideoDownloader(string baseFilePath)
         {
             this.baseFilePath = baseFilePath;
+            this.ffmpegPath = GetPathToFFMPEG();
             youtube = new YoutubeClient();
+        }
+
+        private string GetPathToFFMPEG()
+        {
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            Console.WriteLine("[GetPathToFFMPEG] app data path: " + appDataPath);
+            string wingetPackagesPath = Path.Combine("Microsoft", "WinGet", "Packages");
+            string fullWinGetPackagesPath = Path.Combine(appDataPath, wingetPackagesPath);
+            string ffmpegBaseWinGetFolderName = GetDirectoryThatBeginsWith("Gyan.FFmpeg_Microsoft.Winget", fullWinGetPackagesPath);
+            string ffmpegWinGetPkgPath = Path.Combine(fullWinGetPackagesPath, ffmpegBaseWinGetFolderName);
+            string ffmpegVersionFolderName = GetDirectoryThatBeginsWith("ffmpeg", ffmpegWinGetPkgPath);
+            string ffmpegExePath = Path.Combine(ffmpegWinGetPkgPath, ffmpegVersionFolderName, "bin", "ffmpeg.exe");
+            return ffmpegExePath;
+        }
+
+        private string GetDirectoryThatBeginsWith(string startsWithStr, string baseDir)
+        {
+            Console.WriteLine("[GetDirectoryThatBeginsWith] Base Dir: " + baseDir);
+            string[] matchingDirs = Directory.GetDirectories(baseDir, startsWithStr + "*", SearchOption.TopDirectoryOnly);
+            foreach (string dir in matchingDirs)
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(dir);
+                Console.WriteLine("[GetDirectoryThatBeginsWith] Subdirectory name: " + directoryInfo.Name);
+                if (directoryInfo.Name.StartsWith(startsWithStr))
+                {
+                    return directoryInfo.Name;
+                }
+            }
+
+            throw new DirectoryNotFoundException("Directory starting with " + startsWithStr + " in base dir " + baseDir + " not found.");
         }
 
         public async Task DownloadVideo(RobinForm form, string url)
@@ -116,7 +148,10 @@ namespace Robin
                                                       string videoPath,
                                                       int videoSizeInMegabytes)
         {
-            await youtube.Videos.DownloadAsync(videoId, videoPath, new Progress<double>(progress =>
+            await youtube.Videos.DownloadAsync(videoId, 
+                                               videoPath, 
+                                               converter => converter.SetFFmpegPath(this.ffmpegPath), 
+                                               new Progress<double>(progress =>
             {
                 form.SetProgressBarValue(listItem, (int)(progress * videoSizeInMegabytes));
             }));
