@@ -14,6 +14,8 @@ namespace Robin
 {
     internal class YouTubeExplodeVideoDownloader : YouTubeVideoDownloader
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         YoutubeClient youtube;
         string baseFilePath;
         string ffmpegPath;
@@ -27,29 +29,39 @@ namespace Robin
 
         private string GetPathToFFMPEG()
         {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            Console.WriteLine("[GetPathToFFMPEG] app data path: " + appDataPath);
-            string wingetPackagesPath = Path.Combine("Microsoft", "WinGet", "Packages");
-            string fullWinGetPackagesPath = Path.Combine(appDataPath, wingetPackagesPath);
-            string ffmpegBaseWinGetFolderName = GetDirectoryThatBeginsWith("Gyan.FFmpeg_Microsoft.Winget", fullWinGetPackagesPath);
-            string ffmpegWinGetPkgPath = Path.Combine(fullWinGetPackagesPath, ffmpegBaseWinGetFolderName);
-            string ffmpegVersionFolderName = GetDirectoryThatBeginsWith("ffmpeg", ffmpegWinGetPkgPath);
-            string ffmpegExePath = Path.Combine(ffmpegWinGetPkgPath, ffmpegVersionFolderName, "bin", "ffmpeg.exe");
-            return ffmpegExePath;
+            try
+            {
+                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                logger.Info("[GetPathToFFMPEG] app data path: {0}", appDataPath);
+                string wingetPackagesPath = Path.Combine("Microsoft", "WinGet", "Packages");
+                string fullWinGetPackagesPath = Path.Combine(appDataPath, wingetPackagesPath);
+                string ffmpegBaseWinGetFolderName = GetDirectoryThatBeginsWith("Gyan.FFmpeg_Microsoft.Winget", fullWinGetPackagesPath);
+                string ffmpegWinGetPkgPath = Path.Combine(fullWinGetPackagesPath, ffmpegBaseWinGetFolderName);
+                string ffmpegVersionFolderName = GetDirectoryThatBeginsWith("ffmpeg", ffmpegWinGetPkgPath);
+                string ffmpegExePath = Path.Combine(ffmpegWinGetPkgPath, ffmpegVersionFolderName, "bin", "ffmpeg.exe");
+                return ffmpegExePath;
+            }
+            catch (Exception e)
+            {
+                DisplayAndLogException(e);
+                throw e;
+            }
         }
 
         private string GetDirectoryThatBeginsWith(string startsWithStr, string baseDir)
         {
-            Console.WriteLine("[GetDirectoryThatBeginsWith] Base Dir: " + baseDir);
+            logger.Info("[GetDirectoryThatBeginsWith] Base Dir: " + baseDir);
             string[] matchingDirs = Directory.GetDirectories(baseDir, startsWithStr + "*", SearchOption.TopDirectoryOnly);
-            foreach (string dir in matchingDirs)
+
+            if (matchingDirs.Length > 0)
             {
-                DirectoryInfo directoryInfo = new DirectoryInfo(dir);
-                Console.WriteLine("[GetDirectoryThatBeginsWith] Subdirectory name: " + directoryInfo.Name);
-                if (directoryInfo.Name.StartsWith(startsWithStr))
+                if (matchingDirs.Length > 1)
                 {
-                    return directoryInfo.Name;
+                    logger.Warn("[GetDirectoryThatBeginsWith] More than one matching directory starts with {0}", startsWithStr);
                 }
+
+                DirectoryInfo directoryInfo = new DirectoryInfo(matchingDirs.First());
+                return directoryInfo.Name;
             }
 
             throw new DirectoryNotFoundException("Directory starting with " + startsWithStr + " in base dir " + baseDir + " not found.");
@@ -65,12 +77,12 @@ namespace Robin
             var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
 
             var videoStreams = streamManifest.GetVideoStreams();
-            Console.WriteLine($"streamManifest video streams count: {videoStreams.Count()}");
+            logger.Info($"streamManifest video streams count: {videoStreams.Count()}");
 
             if (videoStreams.Count() > 0)
             {
                 var maxVideoQualityStreamInfo = videoStreams.GetWithHighestVideoQuality();
-                Console.WriteLine($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
+                logger.Info($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
 
                 var videoInfo = await youtube.Videos.GetAsync(videoUrl);
 
@@ -100,7 +112,7 @@ namespace Robin
         }
         private string MakeValidVideoTitle(string rawVideoTitle)
         {
-            Console.WriteLine($"Raw video title: {rawVideoTitle}");
+            logger.Info($"Raw video title: {rawVideoTitle}");
             return string.Concat(rawVideoTitle.Split(System.IO.Path.GetInvalidFileNameChars())).Trim();
         }
 
@@ -126,17 +138,17 @@ namespace Robin
                     try
                     {
                         videoPath = videoPath.Replace("/live/", "/watch?v=");
-                        Console.WriteLine("[DownloadVideo_Explode] Replaced live video path with watch: " + videoPath);
+                        logger.Info("[DownloadVideo_Explode] Replaced live video path with watch: {0}", videoPath);
                         await DownloadVideoAsync_Explode(form, listItem, youtube, videoInfo.Id, videoPath, videoSizeInMegabytes);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Exception: {ex.Message}\n\n{ex.ToString()}");
+                        DisplayAndLogException(ex);
                     }
                 }
                 else
                 {
-                    MessageBox.Show($"Exception: {e.Message}\n\n{e.ToString()}");
+                    DisplayAndLogException(e);
                 }
             }
         }
@@ -157,6 +169,12 @@ namespace Robin
             }));
 
             form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
+        }
+
+        private void DisplayAndLogException(Exception e)
+        {
+            MessageBox.Show($"Exception: {e.Message}\n\n{e.ToString()}");
+            logger.Error("Exception: {0}\n:\n{1}", e.Message, e.ToString());
         }
     }
 }

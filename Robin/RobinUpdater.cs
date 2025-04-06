@@ -10,17 +10,19 @@ namespace Robin
 {
     internal class RobinUpdater
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public static void InstallUpdateSyncWithInfo()
         {
             UpdateCheckInfo info = null;
 
             if (ApplicationDeployment.IsNetworkDeployed)
             {
-                Console.WriteLine("[InstallUpdateSyncWithInfo] App is Network Deployed");
+                logger.Info("[InstallUpdateSyncWithInfo] App is Network Deployed");
 
                 ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
 
-                Console.WriteLine("[InstallUpdateSyncWithInfo] Current version: " + ad.CurrentVersion);
+                logger.Info("[InstallUpdateSyncWithInfo] Current version: {0}", ad.CurrentVersion);
 
                 try
                 {

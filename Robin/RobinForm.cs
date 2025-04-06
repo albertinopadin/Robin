@@ -12,6 +12,7 @@ namespace Robin
 {
     public partial class RobinForm : Form
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static string baseFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
         YouTubeVideoDownloader videoDownloader = new YouTubeExplodeVideoDownloader(baseFilePath);
 
@@ -21,10 +22,13 @@ namespace Robin
 
             if (ApplicationDeployment.IsNetworkDeployed)
             {
-                label_appVersion.Text = ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+                string robinVersion = ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+                label_appVersion.Text = robinVersion;
+                logger.Info("Robin version: {0}", robinVersion);
             } else
             {
                 label_appVersion.Text = "NON-NETWORK DEPLOYED";
+                logger.Info("This instance of Robin is not network deployed.");
             }
 
             listView_downloads.ItemActivate += (s, e) =>
@@ -75,7 +79,7 @@ namespace Robin
         public ListViewItem AddVideoToDownloadsList(string videoTitle, int videoSize)
         {
             listView_downloads.BeginUpdate();
-            Console.WriteLine($"Valid video title: {videoTitle}");
+            logger.Info($"Valid video title: {videoTitle}");
             ListViewItem videoItem = new ListViewItem(videoTitle);
             videoItem.SubItems.Add("Downloading");
             videoItem.SubItems.Add("Download path will appear here");
@@ -95,7 +99,7 @@ namespace Robin
         {
             System.Windows.Forms.ProgressBar progressBar = new System.Windows.Forms.ProgressBar();
             progressBar.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
-            Console.WriteLine($"Progress bar bounds: {bounds.X}, {bounds.Y}, {bounds.Width}, {bounds.Height}");
+            logger.Info($"[AddProgressBar] Progress bar bounds: {bounds.X}, {bounds.Y}, {bounds.Width}, {bounds.Height}");
             progressBar.Minimum = 0;
             progressBar.Maximum = videoSize;
             progressBar.Value = 1;
@@ -138,7 +142,7 @@ namespace Robin
 
         private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("[checkForUpdatesToolStripMenuItem_Click] Application Product Version: " + 
+            logger.Info("[checkForUpdatesToolStripMenuItem_Click] Application Product Version: {0}", 
                 System.Windows.Forms.Application.ProductVersion);
             RobinUpdater.InstallUpdateSyncWithInfo();
         }
