@@ -8,6 +8,6 @@ namespace Robin
 {
     internal interface YouTubeVideoDownloader
     {
-        Task DownloadVideo(RobinForm form, string url);
+        void DownloadVideo(RobinForm form, string url);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngleSharp.Media;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -67,56 +68,65 @@ namespace Robin
             throw new DirectoryNotFoundException("Directory starting with " + startsWithStr + " in base dir " + baseDir + " not found.");
         }
 
-        public async Task DownloadVideo(RobinForm form, string url)
+        public async void DownloadVideo(RobinForm form, string url)
         {
+            form.SetCursorLoading();
             await DownloadBestVideo(form, url);
+            form.SetCursorNormal();
         }
 
         private async Task DownloadBestVideo(RobinForm form, string videoUrl)
         {
-            var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
-
-            var videoStreams = streamManifest.GetVideoStreams();
-            logger.Info($"streamManifest video streams count: {videoStreams.Count()}");
-
-            if (videoStreams.Count() > 0)
+            try
             {
-                var maxVideoQualityStreamInfo = videoStreams.GetWithHighestVideoQuality();
-                logger.Info($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
+                var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
 
-                var videoInfo = await youtube.Videos.GetAsync(videoUrl);
+                var videoStreams = streamManifest.GetVideoStreams();
+                logger.Info($"streamManifest video streams count: {videoStreams.Count()}");
 
-                form.SetVideoInfo(new RobinVideoInfo(videoInfo.Title,
+                if (videoStreams.Count() > 0)
+                {
+                    var maxVideoQualityStreamInfo = videoStreams.GetWithHighestVideoQuality();
+                    logger.Info($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
+
+                    var videoInfo = await youtube.Videos.GetAsync(videoUrl);
+
+                    form.SetVideoInfo(new RobinVideoInfo(videoInfo.Title,
                                                      maxVideoQualityStreamInfo.Container.Name,
                                                      maxVideoQualityStreamInfo.VideoResolution.ToString(),
                                                      maxVideoQualityStreamInfo.Bitrate.ToString(),
                                                      maxVideoQualityStreamInfo.Size.MegaBytes.ToString("n2")));
 
-                // TODO: figure out how to make this work:
-                //if (!backgroundWorker1.IsBusy)
-                //{
-                //    backgroundWorker1.RunWorkerAsync();
-                //}
-
-                await DownloadVideo_Explode(form,
-                                            youtube,
-                                            videoUrl,
-                                            videoInfo,
-                                            (int)maxVideoQualityStreamInfo.Size.MegaBytes,
-                                            maxVideoQualityStreamInfo.Container.Name);
+                    _ = Task.Run(() =>
+                    {
+                        DownloadVideo_Explode(form,
+                                                youtube,
+                                                videoUrl,
+                                                videoInfo,
+                                                (int)maxVideoQualityStreamInfo.Size.MegaBytes,
+                                                maxVideoQualityStreamInfo.Container.Name);
+                    });
+                    
+                }
+                else
+                {
+                    MessageBox.Show($"No video streams found for URL {videoUrl}.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show($"No video streams found for URL {videoUrl}.");
+                logger.Error(ex);
+                MessageBox.Show(ex.Message);
             }
         }
+
         private string MakeValidVideoTitle(string rawVideoTitle)
         {
             logger.Info($"Raw video title: {rawVideoTitle}");
             return string.Concat(rawVideoTitle.Split(System.IO.Path.GetInvalidFileNameChars())).Trim();
         }
 
-        private async Task DownloadVideo_Explode(RobinForm form,
+        private async void DownloadVideo_Explode(RobinForm form,
                                                  YoutubeClient youtube,
                                                  string videoUrl,
                                                  YoutubeExplode.Videos.Video videoInfo,
@@ -129,7 +139,12 @@ namespace Robin
 
             try
             {
-                await DownloadVideoAsync_Explode(form, listItem, youtube, videoInfo.Id, videoPath, videoSizeInMegabytes);
+                await DownloadVideoAsync_Explode(form, 
+                                                 listItem, 
+                                                 youtube, 
+                                                 videoInfo.Id, 
+                                                 videoPath, 
+                                                 videoSizeInMegabytes);
             }
             catch (Exception e)
             {
@@ -139,7 +154,12 @@ namespace Robin
                     {
                         videoPath = videoPath.Replace("/live/", "/watch?v=");
                         logger.Info("[DownloadVideo_Explode] Replaced live video path with watch: {0}", videoPath);
-                        await DownloadVideoAsync_Explode(form, listItem, youtube, videoInfo.Id, videoPath, videoSizeInMegabytes);
+                        await DownloadVideoAsync_Explode(form, 
+                                                         listItem, 
+                                                         youtube, 
+                                                         videoInfo.Id, 
+                                                         videoPath, 
+                                                         videoSizeInMegabytes);
                     }
                     catch (Exception ex)
                     {
@@ -160,13 +180,19 @@ namespace Robin
                                                       string videoPath,
                                                       int videoSizeInMegabytes)
         {
+            var progress = new Progress<double>(progress =>
+            {
+                int progressBarValue = (int)(progress * videoSizeInMegabytes);
+                if (progressBarValue % 2 == 0)
+                {
+                    form.SetProgressBarValue(listItem, progressBarValue);
+                }
+            });
+
             await youtube.Videos.DownloadAsync(videoId, 
                                                videoPath, 
                                                converter => converter.SetFFmpegPath(this.ffmpegPath), 
-                                               new Progress<double>(progress =>
-            {
-                form.SetProgressBarValue(listItem, (int)(progress * videoSizeInMegabytes));
-            }));
+                                               progress);
 
             form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
         }

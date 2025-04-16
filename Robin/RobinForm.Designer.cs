@@ -228,10 +228,7 @@
             this.label8.Size = new System.Drawing.Size(150, 31);
             this.label8.TabIndex = 14;
             this.label8.Text = "Size in MB:";
-            // 
-            // backgroundWorker1
-            // 
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            //
             // 
             // menuStrip1
             // 

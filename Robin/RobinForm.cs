@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using FFMpegCore.Enums;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Robin
 {
@@ -19,18 +20,38 @@ namespace Robin
         public RobinForm()
         {
             InitializeComponent();
+            DisplayAppVersion();
+            SetDownloadListClickHandler();
+        }
 
-            if (ApplicationDeployment.IsNetworkDeployed)
+        private void DisplayAppVersion()
+        {
+            bool isNetworkDeployed = false;
+
+            try
+            {
+                isNetworkDeployed = ApplicationDeployment.IsNetworkDeployed;
+            }
+            catch (Exception ex)
+            {
+                logger.Warn("ApplicationDeployment threw exception; application may not be network deployed. {0}", ex.Message);
+            }
+
+            if (isNetworkDeployed)
             {
                 string robinVersion = ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
                 label_appVersion.Text = robinVersion;
                 logger.Info("Robin version: {0}", robinVersion);
-            } else
+            }
+            else
             {
                 label_appVersion.Text = "NON-NETWORK DEPLOYED";
                 logger.Info("This instance of Robin is not network deployed.");
             }
+        }
 
+        private void SetDownloadListClickHandler()
+        {
             listView_downloads.ItemActivate += (s, e) =>
             {
                 System.Windows.Forms.ListView.SelectedListViewItemCollection selectedItems = listView_downloads.SelectedItems;
@@ -49,20 +70,53 @@ namespace Robin
             };
         }
 
-        private async void btn_download_Click(object sender, EventArgs e)
+        private void btn_download_Click(object sender, EventArgs e)
         {
-            Cursor = Cursors.WaitCursor;
-            await videoDownloader.DownloadVideo(this, textBox_videoURL.Text);
-            Cursor = Cursors.Arrow;
+            videoDownloader.DownloadVideo(this, textBox_videoURL.Text);
+        }
+
+        public void SetCursorLoading()
+        {
+            if (this.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { SetCursorLoading(); };
+                this.Invoke(threadsafeCall);
+            } else
+            {
+                Cursor = Cursors.WaitCursor;
+            }
+        }
+
+        public void SetCursorNormal()
+        {
+            if (this.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { SetCursorNormal(); };
+                this.Invoke(threadsafeCall);
+            }
+            else
+            {
+                Cursor = Cursors.Arrow;
+            }
         }
 
         public void SetVideoInfo(RobinVideoInfo info)
         {
-            label_videoTitle.Text = info.Title;
-            label_videoExtension.Text = info.Extension;
-            label_videoResolution.Text = info.Resolution;
-            label_maxBitrate.Text = info.Bitrate;
-            label_size.Text = info.Size;
+            if (label_videoTitle.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { SetVideoInfo(info); };
+                label_videoTitle.Invoke(threadsafeCall);
+            } else
+            {
+                label_videoTitle.Text = info.Title;
+                label_videoExtension.Text = info.Extension;
+                label_videoResolution.Text = info.Resolution;
+                label_maxBitrate.Text = info.Bitrate;
+                label_size.Text = info.Size;
+            }
         }
 
         public void SetProgressBarValue(ListViewItem item, int value)
@@ -72,27 +126,55 @@ namespace Robin
                 listView_downloads.Controls.OfType<System.Windows.Forms.ProgressBar>().FirstOrDefault(i => i.Name == videoName);
             if (progressBar != null)
             {
+                SafeSetProgressBarValue(progressBar, value);
+            }
+        }
+
+        private void SafeSetProgressBarValue(System.Windows.Forms.ProgressBar progressBar, int value)
+        {
+            if (progressBar.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { SafeSetProgressBarValue(progressBar, value); };
+                progressBar.Invoke(threadsafeCall);
+            } else
+            {
                 progressBar.Value = value;
             }
         }
 
         public ListViewItem AddVideoToDownloadsList(string videoTitle, int videoSize)
         {
-            listView_downloads.BeginUpdate();
             logger.Info($"Valid video title: {videoTitle}");
             ListViewItem videoItem = new ListViewItem(videoTitle);
             videoItem.SubItems.Add("Downloading");
             videoItem.SubItems.Add("Download path will appear here");
             videoItem.SubItems.Add("");
+
+            if (listView_downloads.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { AddVideoItemToDownloadsList(videoItem, videoTitle, videoSize); };
+                listView_downloads.Invoke(threadsafeCall);
+            } else
+            {
+                AddVideoItemToDownloadsList(videoItem, videoTitle, videoSize);
+            }
+
+            return videoItem;
+        }
+
+        private void AddVideoItemToDownloadsList(ListViewItem videoItem, string videoTitle, int videoSize)
+        {
+            listView_downloads.BeginUpdate();
+
             listView_downloads.Items.Add(videoItem);
 
             Rectangle progressBarBounds = videoItem.SubItems[3].Bounds;
             AddProgressBar(progressBarBounds, videoTitle, videoSize);
 
             // TODO: Add cancel button
-
             listView_downloads.EndUpdate();
-            return videoItem;
         }
 
         private void AddProgressBar(Rectangle bounds, string videoTitle, int videoSize)
@@ -112,32 +194,25 @@ namespace Robin
 
         public void NotifyDownloadFinished(ListViewItem listItem, string videoPath, int videoSize)
         {
-            listView_downloads.BeginUpdate();
-            listItem.SubItems[1].Text = "Done";
-            listItem.SubItems[2].Text = videoPath;
+            if (listView_downloads.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { NotifyDownloadFinished(listItem, videoPath, videoSize); };
+                listView_downloads.Invoke(threadsafeCall);
+            } else
+            {
+                listView_downloads.BeginUpdate();
+                listItem.SubItems[1].Text = "Done";
+                listItem.SubItems[2].Text = videoPath;
 
-            SetProgressBarValue(listItem, videoSize);
-
-            listView_downloads.EndUpdate();
+                SetProgressBarValue(listItem, videoSize);
+                listView_downloads.EndUpdate();
+            }
         }
 
         private void OpenVideo(string videoPath)
         {
             System.Diagnostics.Process.Start(videoPath);
-        }
-
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            //while (progressBarDownload.Value < progressBarDownload.Maximum * 0.95)
-            //{
-            //    Thread.Sleep(1000);
-            //    backgroundWorker1.ReportProgress(0, null);
-            //}
-        }
-
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            //progressBarDownload.PerformStep();
         }
 
         private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
