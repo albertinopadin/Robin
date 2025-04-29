@@ -17,7 +17,7 @@
     <UpdateUrl>https://raw.githubusercontent.com/albertinopadin/Robin/main/published/</UpdateUrl>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>33</ApplicationRevision>
+    <ApplicationRevision>34</ApplicationRevision>
     <ApplicationVersion>0.6.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -80,8 +80,8 @@
     <ManifestKeyFile>Robin_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AngleSharp, Version=1.2.0.0, Culture=neutral, PublicKeyToken=e83494dcdc6d31ea, processorArchitecture=MSIL">
-      <HintPath>packages\AngleSharp.1.2.0\lib\net472\AngleSharp.dll</HintPath>
+    <Reference Include="AngleSharp, Version=1.3.0.0, Culture=neutral, PublicKeyToken=e83494dcdc6d31ea, processorArchitecture=MSIL">
+      <HintPath>packages\AngleSharp.1.3.0\lib\net472\AngleSharp.dll</HintPath>
     </Reference>
     <Reference Include="CliWrap, Version=3.8.2.0, Culture=neutral, PublicKeyToken=1c4a4fc2d6886e5a, processorArchitecture=MSIL">
       <HintPath>packages\CliWrap.3.8.2\lib\netstandard2.0\CliWrap.dll</HintPath>
@@ -302,6 +302,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RobinUpdater.cs" />
+    <Compile Include="RobinUtils.cs" />
     <Compile Include="RobinVideoDownloader.cs" />
     <Compile Include="RobinVideoInfo.cs" />
     <Compile Include="YouTubeExplodeVideoDownloader.cs" />
