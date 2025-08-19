@@ -8,6 +8,8 @@ using System.Linq;
 using FFMpegCore.Enums;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static System.Net.Mime.MediaTypeNames;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Robin
 {
@@ -15,7 +17,17 @@ namespace Robin
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static string baseFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+
+        private static int videoListViewItemTitle = 0;
+        private static int videoListViewItemDownloadStatus = 1;
+        private static int videoListViewItemDownloadedLocation = 2;
+
+        private static string videoStatusDowloading = "Downloading";
+        private static string videoStatusDone = "Done";
+        private static string videoStatusCancelled = "Cancelled";
+
         YouTubeVideoDownloader videoDownloader = new YouTubeExplodeVideoDownloader(baseFilePath);
+        private Dictionary<string, DownloadState> activeDownloads = new Dictionary<string, DownloadState>();
 
         public RobinForm()
         {
@@ -72,7 +84,123 @@ namespace Robin
 
         private void btn_download_Click(object sender, EventArgs e)
         {
-            videoDownloader.DownloadVideo(this, textBox_videoURL.Text);
+            RobinDownloadVideoWithChecks(textBox_videoURL.Text);
+        }
+
+        private void textBox_videoURL_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                RobinDownloadVideoWithChecks(textBox_videoURL.Text);
+            }
+        }
+
+        private void RobinDownloadVideoWithChecks(string videoUrl)
+        {
+            _ = Task.Run(async () =>
+            {
+                string videoTitle = await videoDownloader.GetVideoTitle(videoUrl);
+                logger.Info("Video title is: {0}", videoTitle);
+                RobinDownloadVideoWithChecks(videoTitle, videoUrl);
+            });
+        }
+
+        private void RobinDownloadVideoWithChecks(string videoTitle, string videoUrl)
+        {
+            // TODO: If video is currently downloading, ask user if should cancel already downloading instance
+            //       and start the download over.
+            //       If video is present in DL but has already finished downloading, ask user if should overwrite
+            //       existing dowload and download again.
+
+            ListViewItem videoListViewItem = listView_downloads.FindItemWithText(videoTitle);
+            if (videoListViewItem != null)
+            {
+                logger.Info("Found video list item with same video URL: {0}", videoUrl);
+
+                if (videoListViewItem.SubItems[videoListViewItemDownloadStatus].Text == videoStatusDone)
+                {
+                    logger.Info("Found existing, already downloaded video with same URL {0} in downloads list", videoUrl);
+                    DialogResult result = MessageBox.Show("The video with URL: " + videoUrl + "  has already been downloaded, " +
+                                                          "would you like to download it again? This will overwrite the existing file.",
+                                                          "Video Already Downloaded",
+                                                          MessageBoxButtons.YesNo,
+                                                          MessageBoxIcon.Question);
+                    if (result == DialogResult.Yes)
+                    {
+                        // Re-download file after removing file from Downloads List:
+                        RemoveVideoItemFromDownloadsList(videoListViewItem);
+                        DownloadVideo(videoUrl);
+                    }
+                    else
+                    {
+                        // Do nothing
+                        ClearVideoUrlTextbox();
+                    }
+                } else if (videoListViewItem.SubItems[videoListViewItemDownloadStatus].Text == videoStatusDowloading)
+                {
+                    logger.Info("Found existing currently downloading video with same URL {0} in downloads list", videoUrl);
+                    DialogResult result = MessageBox.Show("The video with URL: " + videoUrl + "  already has a download " +
+                                                          "in progress, would you like to cancel the download and restart it?",
+                                                          "Video Already Downloaded",
+                                                          MessageBoxButtons.YesNo,
+                                                          MessageBoxIcon.Question);
+                    if (result == DialogResult.Yes)
+                    {
+                        // TODO:
+                        //CancelDownload();
+                        //RemoveVideoItemFromDownloadsList(videoListViewItem);
+                        //DownloadVideo(videoUrl);
+                        MessageBox.Show("THIS FEATURE HAS NOT BEEN IMPLEMENTED YET", 
+                                        "FEATURE NOT IMPLEMENTED", 
+                                        MessageBoxButtons.OK, 
+                                        MessageBoxIcon.Exclamation);
+                    }
+                    else
+                    {
+                        // Do nothing
+                        ClearVideoUrlTextbox();
+                    }
+                }
+            } else
+            {
+                DownloadVideo(videoUrl);
+            }
+        }
+
+        private void DownloadVideo(string videoUrl)
+        {
+            // Create a new download state for tracking
+            DownloadState downloadState = new DownloadState();
+            downloadState.VideoUrl = videoUrl;
+            
+            // We'll set the video title after we get it from the downloader
+            // For now, start the download with cancellation support
+            videoDownloader.DownloadVideo(this, videoUrl, downloadState.CancellationTokenSource.Token);
+        }
+
+        public void RegisterActiveDownload(string videoTitle, DownloadState downloadState)
+        {
+            if (!activeDownloads.ContainsKey(videoTitle))
+            {
+                downloadState.VideoTitle = videoTitle;
+                activeDownloads[videoTitle] = downloadState;
+                logger.Info($"Registered active download for: {videoTitle}");
+            }
+        }
+
+        // Method moved to line 346 (CancelDownload is now implemented above)
+
+        public void ClearVideoUrlTextbox()
+        {
+            if (textBox_videoURL.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { ClearVideoUrlTextbox(); };
+                this.Invoke(threadsafeCall);
+            } else
+            {
+                textBox_videoURL.Clear();
+            }
         }
 
         public void SetCursorLoading()
@@ -147,9 +275,10 @@ namespace Robin
         {
             logger.Info($"Valid video title: {videoTitle}");
             ListViewItem videoItem = new ListViewItem(videoTitle);
-            videoItem.SubItems.Add("Downloading");
+            videoItem.SubItems.Add(videoStatusDowloading);
             videoItem.SubItems.Add("Download path will appear here");
             videoItem.SubItems.Add("");
+            videoItem.SubItems.Add(""); // Column for cancel button
 
             if (listView_downloads.InvokeRequired)
             {
@@ -173,7 +302,9 @@ namespace Robin
             Rectangle progressBarBounds = videoItem.SubItems[3].Bounds;
             AddProgressBar(progressBarBounds, videoTitle, videoSize);
 
-            // TODO: Add cancel button
+            Rectangle cancelButtonBounds = videoItem.SubItems[4].Bounds;
+            AddCancelButton(cancelButtonBounds, videoTitle);
+            
             listView_downloads.EndUpdate();
         }
 
@@ -192,6 +323,25 @@ namespace Robin
             listView_downloads.Controls.Add(progressBar);
         }
 
+        private void AddCancelButton(Rectangle bounds, string videoTitle)
+        {
+            System.Windows.Forms.Button cancelButton = new System.Windows.Forms.Button();
+            cancelButton.Text = "Cancel";
+            cancelButton.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+            cancelButton.Name = "cancel_" + videoTitle;
+            cancelButton.Visible = true;
+            cancelButton.Click += (s, e) => CancelDownload(videoTitle);
+            
+            listView_downloads.Controls.Add(cancelButton);
+        }
+
+        private void RemoveVideoItemFromDownloadsList(ListViewItem videoListViewItem)
+        {
+            listView_downloads.BeginUpdate();
+            listView_downloads.Items.Remove(videoListViewItem);
+            listView_downloads.EndUpdate();
+        }
+
         public void NotifyDownloadFinished(ListViewItem listItem, string videoPath, int videoSize)
         {
             if (listView_downloads.InvokeRequired)
@@ -202,11 +352,80 @@ namespace Robin
             } else
             {
                 listView_downloads.BeginUpdate();
-                listItem.SubItems[1].Text = "Done";
-                listItem.SubItems[2].Text = videoPath;
+                listItem.SubItems[videoListViewItemTitle].BackColor = SystemColors.Highlight;
+                listItem.SubItems[videoListViewItemTitle].ForeColor = SystemColors.HighlightText;
+                listItem.SubItems[videoListViewItemDownloadStatus].Text = videoStatusDone;
+                listItem.SubItems[videoListViewItemDownloadedLocation].Text = videoPath;
 
                 SetProgressBarValue(listItem, videoSize);
+                
+                // Hide cancel button when download completes
+                string videoTitle = listItem.SubItems[videoListViewItemTitle].Text;
+                System.Windows.Forms.Button cancelButton = listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
+                    .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+                if (cancelButton != null)
+                {
+                    cancelButton.Enabled = false;
+                    cancelButton.Visible = false;
+                }
+                
+                // Remove from active downloads if exists
+                if (activeDownloads.TryGetValue(videoTitle, out DownloadState state))
+                {
+                    state.IsCompleted = true;
+                    activeDownloads.Remove(videoTitle);
+                    state.Dispose();
+                }
+                
                 listView_downloads.EndUpdate();
+            }
+        }
+
+        private void CancelDownload(string videoTitle)
+        {
+            if (activeDownloads.TryGetValue(videoTitle, out DownloadState state))
+            {
+                logger.Info($"Cancelling download for: {videoTitle}");
+                state.CancellationTokenSource.Cancel();
+                state.IsCancelled = true;
+                
+                // Update UI to show cancelled status
+                ListViewItem videoItem = listView_downloads.FindItemWithText(videoTitle);
+                if (videoItem != null)
+                {
+                    UpdateDownloadStatus(videoItem, videoStatusCancelled);
+                    
+                    // Hide cancel button
+                    System.Windows.Forms.Button cancelButton = listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
+                        .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+                    if (cancelButton != null)
+                    {
+                        cancelButton.Enabled = false;
+                        cancelButton.Visible = false;
+                    }
+                }
+                
+                // Clean up from active downloads
+                activeDownloads.Remove(videoTitle);
+                state.Dispose();
+            }
+        }
+
+        public void UpdateDownloadStatus(ListViewItem item, string status)
+        {
+            if (listView_downloads.InvokeRequired)
+            {
+                Action threadsafeCall = delegate { UpdateDownloadStatus(item, status); };
+                listView_downloads.Invoke(threadsafeCall);
+            }
+            else
+            {
+                item.SubItems[videoListViewItemDownloadStatus].Text = status;
+                if (status == videoStatusCancelled)
+                {
+                    item.SubItems[videoListViewItemTitle].BackColor = System.Drawing.Color.LightGray;
+                    item.SubItems[videoListViewItemTitle].ForeColor = System.Drawing.Color.DarkGray;
+                }
             }
         }
 

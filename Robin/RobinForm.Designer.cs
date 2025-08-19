@@ -45,6 +45,8 @@
             this.videoNameHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.statusHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.locationHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.progressHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.cancelHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.label_size = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
@@ -53,7 +55,6 @@
             this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
             this.label_appVersion = new System.Windows.Forms.Label();
-            this.progressHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -68,6 +69,7 @@
             this.textBox_videoURL.Name = "textBox_videoURL";
             this.textBox_videoURL.Size = new System.Drawing.Size(2136, 44);
             this.textBox_videoURL.TabIndex = 0;
+            this.textBox_videoURL.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox_videoURL_KeyDown);
             // 
             // label1
             // 
@@ -180,7 +182,8 @@
             this.videoNameHeader,
             this.statusHeader,
             this.locationHeader,
-            this.progressHeader});
+            this.progressHeader,
+            this.cancelHeader});
             this.listView_downloads.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.listView_downloads.GridLines = true;
             this.listView_downloads.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
@@ -197,17 +200,27 @@
             // videoNameHeader
             // 
             this.videoNameHeader.Text = "Video Name";
-            this.videoNameHeader.Width = 758;
+            this.videoNameHeader.Width = 750;
             // 
             // statusHeader
             // 
             this.statusHeader.Text = "Status";
-            this.statusHeader.Width = 300;
+            this.statusHeader.Width = 240;
             // 
             // locationHeader
             // 
             this.locationHeader.Text = "Location";
-            this.locationHeader.Width = 960;
+            this.locationHeader.Width = 875;
+            // 
+            // progressHeader
+            // 
+            this.progressHeader.Text = "Progress";
+            this.progressHeader.Width = 460;
+            // 
+            // cancelHeader
+            // 
+            this.cancelHeader.Text = "";
+            this.cancelHeader.Width = 150;
             // 
             // label_size
             // 
@@ -228,7 +241,6 @@
             this.label8.Size = new System.Drawing.Size(150, 31);
             this.label8.TabIndex = 14;
             this.label8.Text = "Size in MB:";
-            //
             // 
             // menuStrip1
             // 
@@ -275,11 +287,6 @@
             this.label_appVersion.Size = new System.Drawing.Size(60, 25);
             this.label_appVersion.TabIndex = 18;
             this.label_appVersion.Text = "0.0.0";
-            // 
-            // progressHeader
-            // 
-            this.progressHeader.Text = "Progress";
-            this.progressHeader.Width = 460;
             // 
             // RobinForm
             // 
@@ -342,6 +349,7 @@
         private System.Windows.Forms.Label label_appVersion;
         private System.Windows.Forms.ColumnHeader locationHeader;
         private System.Windows.Forms.ColumnHeader progressHeader;
+        private System.Windows.Forms.ColumnHeader cancelHeader;
     }
 }
 

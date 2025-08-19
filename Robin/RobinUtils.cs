@@ -16,6 +16,8 @@ namespace Robin
         private static readonly string GyanFFmpegWingetDirName = "Gyan.FFmpeg_Microsoft.Winget";
         private static readonly string ffmpegExeFilename = "ffmpeg.exe";
 
+        private static readonly string RobinErrorCaption = "Robin Error";
+
         public static string GetPathToFFMPEG()
         {
             try
@@ -57,7 +59,8 @@ namespace Robin
 
         public static void DisplayAndLogException(Exception e)
         {
-            MessageBox.Show($"Exception: {e.Message}\n\n{e.ToString()}");
+            string msg = $"Exception: {e.Message}\n\n{e.ToString()}";
+            MessageBox.Show(msg, RobinErrorCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
             logger.Error("Exception: {0}\n:\n{1}", e.Message, e.ToString());
         }
     }

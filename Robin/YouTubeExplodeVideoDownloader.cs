@@ -187,6 +187,18 @@ namespace Robin
             string validVideoTitle = MakeValidVideoTitle(videoInfo.Title);
             ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle, videoSizeInMegabytes);
             string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{extension}");
+            
+            // Register this download with the form for cancellation tracking
+            if (cancellationToken != CancellationToken.None)
+            {
+                DownloadState state = new DownloadState();
+                state.VideoUrl = videoUrl;
+                state.VideoTitle = validVideoTitle;
+                state.ListViewItem = listItem;
+                state.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                form.RegisterActiveDownload(validVideoTitle, state);
+                cancellationToken = state.CancellationTokenSource.Token;
+            }
 
             try
             {
@@ -197,6 +209,11 @@ namespace Robin
                                                  videoPath, 
                                                  videoSizeInMegabytes,
                                                  cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                logger.Info($"Download cancelled for video: {validVideoTitle}");
+                form.UpdateDownloadStatus(listItem, "Cancelled");
             }
             catch (Exception e)
             {
