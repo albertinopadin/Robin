@@ -1,9 +1,11 @@
 ﻿using AngleSharp.Media;
+using NiL.JS.BaseLibrary;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using VideoLibrary;
@@ -30,17 +32,63 @@ namespace Robin
 
         public async void DownloadVideo(RobinForm form, string url)
         {
+            DownloadVideo(form, url, CancellationToken.None);
+        }
+
+        public async void DownloadVideo(RobinForm form, string url, CancellationToken cancellationToken)
+        {
             form.SetCursorLoading();
-            await DownloadBestVideo(form, url);
+            await DownloadBestVideo(form, url, true, cancellationToken);
             form.SetCursorNormal();
         }
 
-        private async Task DownloadBestVideo(RobinForm form, string videoUrl)
+        public async ValueTask<string> GetVideoTitle(string url)
+        {
+            var videoInfo = await GetVideoInfo(url);
+            return videoInfo.Title;
+        }
+
+        public async ValueTask<YoutubeExplode.Videos.Video> GetVideoInfo(string videoUrl)
+        {
+            return await youtube.Videos.GetAsync(videoUrl);
+        }
+
+        private async Task DownloadBestVideo(RobinForm form, string videoUrl, bool getManifest, CancellationToken cancellationToken = default)
+        {
+            // TODO: Can we still download video if the line below fails?
+
+            if (getManifest)
+            {
+                try
+                {
+                    var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
+                    await DownloadBestVideo(form, videoUrl, streamManifest, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Error getting stream manifest...");
+                    logger.Error(ex);
+                    // Try without getting manifest
+                    logger.Info("Trying to download video without first getting stream manifest...");
+                    await DownloadBestVideo(form, videoUrl, false, cancellationToken);
+                }
+            } else
+            {
+                DownloadVideo_Explode(form,
+                                      youtube,
+                                      videoUrl,
+                                      "mp4",
+                                      "UNKNOWN_RESOLUTION",
+                                      "UNKNOWN_BITRATE",
+                                      9.999,
+                                      cancellationToken);
+            }
+        }
+
+        private async Task DownloadBestVideo(RobinForm form, string videoUrl, StreamManifest streamManifest, CancellationToken cancellationToken = default)
         {
             try
             {
-                var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
-
                 var videoStreams = streamManifest.GetVideoStreams();
                 logger.Info($"streamManifest video streams count: {videoStreams.Count()}");
 
@@ -49,24 +97,38 @@ namespace Robin
                     var maxVideoQualityStreamInfo = videoStreams.GetWithHighestVideoQuality();
                     logger.Info($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
 
-                    var videoInfo = await youtube.Videos.GetAsync(videoUrl);
+                    //var videoInfo = await youtube.Videos.GetAsync(videoUrl);
+                    /*
+                    var videoInfo = await GetVideoInfo(videoUrl);
 
                     form.SetVideoInfo(new RobinVideoInfo(videoInfo.Title,
-                                                     maxVideoQualityStreamInfo.Container.Name,
-                                                     maxVideoQualityStreamInfo.VideoResolution.ToString(),
-                                                     maxVideoQualityStreamInfo.Bitrate.ToString(),
-                                                     maxVideoQualityStreamInfo.Size.MegaBytes.ToString("n2")));
+                                                         maxVideoQualityStreamInfo.Container.Name,
+                                                         maxVideoQualityStreamInfo.VideoResolution.ToString(),
+                                                         maxVideoQualityStreamInfo.Bitrate.ToString(),
+                                                         maxVideoQualityStreamInfo.Size.MegaBytes.ToString("n2")));
 
                     _ = Task.Run(() =>
                     {
                         DownloadVideo_Explode(form,
-                                                youtube,
-                                                videoUrl,
-                                                videoInfo,
-                                                (int)maxVideoQualityStreamInfo.Size.MegaBytes,
-                                                maxVideoQualityStreamInfo.Container.Name);
+                                              youtube,
+                                              videoUrl,
+                                              videoInfo,
+                                              (int)maxVideoQualityStreamInfo.Size.MegaBytes,
+                                              maxVideoQualityStreamInfo.Container.Name);
                     });
-                    
+                    */
+
+                    _ = Task.Run(() =>
+                    {
+                        DownloadVideo_Explode(form,
+                                              youtube,
+                                              videoUrl,
+                                              maxVideoQualityStreamInfo.Container.Name,
+                                              maxVideoQualityStreamInfo.VideoResolution.ToString(),
+                                              maxVideoQualityStreamInfo.Bitrate.ToString(),
+                                              maxVideoQualityStreamInfo.Size.MegaBytes,
+                                              cancellationToken);
+                    });
                 }
                 else
                 {
@@ -77,6 +139,35 @@ namespace Robin
             {
                 RobinUtils.DisplayAndLogException(ex);
             }
+        }
+
+        private async void DownloadVideo_Explode(RobinForm form,
+                                                 YoutubeClient youtube,
+                                                 string videoUrl, 
+                                                 string fileExtension, 
+                                                 string resolution, 
+                                                 string bitrate, 
+                                                 double fileSize,
+                                                 CancellationToken cancellationToken = default)
+        {
+            var videoInfo = await GetVideoInfo(videoUrl);
+
+            form.SetVideoInfo(new RobinVideoInfo(videoInfo.Title,
+                                                 fileExtension,
+                                                 resolution,
+                                                 bitrate,
+                                                 fileSize.ToString("n2")));
+
+            _ = Task.Run(() =>
+            {
+                DownloadVideo_Explode(form,
+                                      youtube,
+                                      videoUrl,
+                                      videoInfo,
+                                      (int)fileSize,
+                                      fileExtension,
+                                      cancellationToken);
+            });
         }
 
         private string MakeValidVideoTitle(string rawVideoTitle)
@@ -90,7 +181,8 @@ namespace Robin
                                                  string videoUrl,
                                                  YoutubeExplode.Videos.Video videoInfo,
                                                  int videoSizeInMegabytes,
-                                                 string extension)
+                                                 string extension,
+                                                 CancellationToken cancellationToken = default)
         {
             string validVideoTitle = MakeValidVideoTitle(videoInfo.Title);
             ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle, videoSizeInMegabytes);
@@ -103,32 +195,12 @@ namespace Robin
                                                  youtube, 
                                                  videoInfo.Id, 
                                                  videoPath, 
-                                                 videoSizeInMegabytes);
+                                                 videoSizeInMegabytes,
+                                                 cancellationToken);
             }
             catch (Exception e)
             {
-                if (videoPath.Split('/').Contains("live"))
-                {
-                    try
-                    {
-                        videoPath = videoPath.Replace("/live/", "/watch?v=");
-                        logger.Info("[DownloadVideo_Explode] Replaced live video path with watch: {0}", videoPath);
-                        await DownloadVideoAsync_Explode(form, 
-                                                         listItem, 
-                                                         youtube, 
-                                                         videoInfo.Id, 
-                                                         videoPath, 
-                                                         videoSizeInMegabytes);
-                    }
-                    catch (Exception ex)
-                    {
-                        RobinUtils.DisplayAndLogException(ex);
-                    }
-                }
-                else
-                {
-                    RobinUtils.DisplayAndLogException(e);
-                }
+                RobinUtils.DisplayAndLogException(e);
             }
         }
 
@@ -137,8 +209,11 @@ namespace Robin
                                                       YoutubeClient youtube,
                                                       string videoId,
                                                       string videoPath,
-                                                      int videoSizeInMegabytes)
+                                                      int videoSizeInMegabytes,
+                                                      CancellationToken cancellationToken = default)
         {
+            form.ClearVideoUrlTextbox();
+
             var progress = new Progress<double>(progress =>
             {
                 int progressBarValue = (int)(progress * videoSizeInMegabytes);
@@ -148,12 +223,37 @@ namespace Robin
                 }
             });
 
-            await youtube.Videos.DownloadAsync(videoId, 
-                                               videoPath, 
-                                               converter => converter.SetFFmpegPath(this.ffmpegPath), 
-                                               progress);
+            try
+            {
+                await youtube.Videos.DownloadAsync(videoId, 
+                                                   videoPath, 
+                                                   converter => converter.SetFFmpegPath(this.ffmpegPath), 
+                                                   progress,
+                                                   cancellationToken);
 
-            form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
+                form.NotifyDownloadFinished(listItem, videoPath, videoSizeInMegabytes);
+            }
+            catch (OperationCanceledException)
+            {
+                logger.Info($"Download cancelled for video: {videoId}");
+                
+                // Clean up partial file if it exists
+                if (File.Exists(videoPath))
+                {
+                    try
+                    {
+                        File.Delete(videoPath);
+                        logger.Info($"Deleted partial file: {videoPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error($"Failed to delete partial file {videoPath}: {ex.Message}");
+                    }
+                }
+                
+                // Re-throw to notify caller
+                throw;
+            }
         }
     }
 }
