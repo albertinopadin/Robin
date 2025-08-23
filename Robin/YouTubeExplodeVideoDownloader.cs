@@ -214,10 +214,20 @@ namespace Robin
             {
                 logger.Info($"Download cancelled for video: {validVideoTitle}");
                 form.UpdateDownloadStatus(listItem, "Cancelled");
+                
+                // Clean up from active downloads
+                form.CleanupDownload(validVideoTitle);
             }
             catch (Exception e)
             {
+                logger.Error($"Download failed for video: {validVideoTitle}");
                 RobinUtils.DisplayAndLogException(e);
+                
+                // Update UI to show error state
+                form.UpdateDownloadStatus(listItem, "Failed");
+                
+                // Clean up from active downloads
+                form.CleanupDownload(validVideoTitle);
             }
         }
 
