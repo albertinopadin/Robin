@@ -267,11 +267,16 @@ namespace Robin
             }
         }
 
+        private System.Windows.Forms.ProgressBar GetProgressBarForVideo(String videoName)
+        {
+            return listView_downloads.Controls.OfType<System.Windows.Forms.ProgressBar>().FirstOrDefault(i => i.Name == videoName);
+        }
+
         public void SetProgressBarValue(ListViewItem item, int value)
         {
             String videoName = item.SubItems[0].Text;
-            System.Windows.Forms.ProgressBar progressBar =
-                listView_downloads.Controls.OfType<System.Windows.Forms.ProgressBar>().FirstOrDefault(i => i.Name == videoName);
+            System.Windows.Forms.ProgressBar progressBar = GetProgressBarForVideo(videoName);
+
             if (progressBar != null)
             {
                 SafeSetProgressBarValue(progressBar, value);
@@ -347,10 +352,11 @@ namespace Robin
         {
             System.Windows.Forms.Button cancelButton = new System.Windows.Forms.Button();
             cancelButton.Text = "Cancel";
-            cancelButton.SetBounds(bounds.X, bounds.Y, Math.Min(80, bounds.Width), bounds.Height);
+            cancelButton.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
             cancelButton.Name = "cancel_" + videoTitle;
             cancelButton.Visible = true;
-            cancelButton.ForeColor = System.Drawing.Color.Red;
+            cancelButton.ForeColor = System.Drawing.Color.White;
+            cancelButton.BackColor = System.Drawing.Color.Red;
             cancelButton.Font = new System.Drawing.Font(cancelButton.Font, System.Drawing.FontStyle.Bold);
             cancelButton.Click += (s, e) => 
             {
@@ -370,6 +376,12 @@ namespace Robin
             listView_downloads.Controls.Add(cancelButton);
         }
 
+        private System.Windows.Forms.Button GetCancelButton(string videoTitle)
+        {
+            return listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
+                .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+        }
+
         private void RemoveVideoItemFromDownloadsList(ListViewItem videoListViewItem)
         {
             if (listView_downloads.InvokeRequired)
@@ -385,8 +397,7 @@ namespace Robin
                 string videoTitle = videoListViewItem.SubItems[videoListViewItemTitle].Text;
                 
                 // Remove progress bar
-                var progressBar = listView_downloads.Controls.OfType<System.Windows.Forms.ProgressBar>()
-                    .FirstOrDefault(p => p.Name == videoTitle);
+                var progressBar = GetProgressBarForVideo(videoTitle);
                 if (progressBar != null)
                 {
                     listView_downloads.Controls.Remove(progressBar);
@@ -394,8 +405,7 @@ namespace Robin
                 }
                 
                 // Remove cancel button
-                var cancelButton = listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
-                    .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+                var cancelButton = GetCancelButton(videoTitle);
                 if (cancelButton != null)
                 {
                     listView_downloads.Controls.Remove(cancelButton);
@@ -426,8 +436,7 @@ namespace Robin
                 
                 // Hide cancel button when download completes
                 string videoTitle = listItem.SubItems[videoListViewItemTitle].Text;
-                System.Windows.Forms.Button cancelButton = listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
-                    .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+                System.Windows.Forms.Button cancelButton = GetCancelButton(videoTitle);
                 if (cancelButton != null)
                 {
                     cancelButton.Enabled = false;
@@ -463,13 +472,14 @@ namespace Robin
                         UpdateDownloadStatus(videoItem, videoStatusCancelled);
                         
                         // Hide cancel button
-                        System.Windows.Forms.Button cancelButton = listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
-                            .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+                        System.Windows.Forms.Button cancelButton = GetCancelButton(videoTitle);
                         if (cancelButton != null)
                         {
                             cancelButton.Enabled = false;
-                            cancelButton.Visible = false;
+                            //cancelButton.Visible = false;
                         }
+
+                        CancelProgressBarForVideo(videoTitle);
                     }
                 }
                 catch (Exception ex)
@@ -486,6 +496,28 @@ namespace Robin
             else
             {
                 logger.Warn($"Attempted to cancel download for '{videoTitle}' but it was not found in active downloads");
+            }
+        }
+
+        private void SafeCancelProgressBar(System.Windows.Forms.ProgressBar progressBar)
+        {
+            if (progressBar.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { SafeCancelProgressBar(progressBar); };
+                progressBar.Invoke(threadsafeCall);
+            }
+            else
+            {
+                progressBar.BackColor = System.Drawing.Color.LightGray;
+            }
+        }
+        private void CancelProgressBarForVideo(String videoName)
+        {
+            System.Windows.Forms.ProgressBar progressBar = GetProgressBarForVideo(videoName);
+            if (progressBar != null)
+            {
+                SafeCancelProgressBar(progressBar);
             }
         }
 
@@ -534,8 +566,7 @@ namespace Robin
         
         private void HideCancelButton(string videoTitle)
         {
-            System.Windows.Forms.Button cancelButton = listView_downloads.Controls.OfType<System.Windows.Forms.Button>()
-                .FirstOrDefault(b => b.Name == "cancel_" + videoTitle);
+            System.Windows.Forms.Button cancelButton = GetCancelButton(videoTitle);
             if (cancelButton != null)
             {
                 cancelButton.Enabled = false;
