@@ -17,7 +17,7 @@
     <UpdateUrl>https://raw.githubusercontent.com/albertinopadin/Robin/main/published/</UpdateUrl>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>34</ApplicationRevision>
+    <ApplicationRevision>35</ApplicationRevision>
     <ApplicationVersion>0.6.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -340,9 +340,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <AdditionalFiles Include="ffmpeg.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AdditionalFiles>
     <Content Include="robin.ico" />
   </ItemGroup>
   <ItemGroup>
