@@ -292,6 +292,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ColorBar.cs" />
     <Compile Include="DownloadState.cs" />
     <Compile Include="FastYouTube.cs" />
     <Compile Include="RobinForm.cs">

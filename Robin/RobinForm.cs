@@ -436,13 +436,8 @@ namespace Robin
                 
                 // Hide cancel button when download completes
                 string videoTitle = listItem.SubItems[videoListViewItemTitle].Text;
-                System.Windows.Forms.Button cancelButton = GetCancelButton(videoTitle);
-                if (cancelButton != null)
-                {
-                    cancelButton.Enabled = false;
-                    cancelButton.Visible = false;
-                }
-                
+                HideCancelButton(videoTitle);
+
                 // Remove from active downloads if exists
                 if (activeDownloads.TryGetValue(videoTitle, out DownloadState state))
                 {
@@ -470,15 +465,7 @@ namespace Robin
                     if (videoItem != null)
                     {
                         UpdateDownloadStatus(videoItem, videoStatusCancelled);
-                        
-                        // Hide cancel button
-                        System.Windows.Forms.Button cancelButton = GetCancelButton(videoTitle);
-                        if (cancelButton != null)
-                        {
-                            cancelButton.Enabled = false;
-                            //cancelButton.Visible = false;
-                        }
-
+                        DisableCancelButton(videoTitle);
                         CancelProgressBarForVideo(videoTitle);
                     }
                 }
@@ -499,6 +486,42 @@ namespace Robin
             }
         }
 
+        public void DisableCancelButton(string videoTitle)
+        {
+            // Disable cancel button
+            System.Windows.Forms.Button cancelButton = GetCancelButton(videoTitle);
+            if (cancelButton != null)
+            {
+                SafeDisableCancelButton(cancelButton);
+            }
+        }
+
+        private void SafeDisableCancelButton(System.Windows.Forms.Button cancelButton)
+        {
+            if (cancelButton.InvokeRequired)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/how-to-make-thread-safe-calls?view=netdesktop-9.0
+                Action threadsafeCall = delegate { SafeDisableCancelButton(cancelButton); };
+                cancelButton.Invoke(threadsafeCall);
+            }
+            else
+            {
+                cancelButton.Enabled = false;
+                cancelButton.BackColor = System.Drawing.Color.LightGray;
+            }
+        }
+
+        public void CancelProgressBarForVideo(String videoName)
+        {
+            logger.Info($"Cancelling progress bar for video: {videoName}");
+            System.Windows.Forms.ProgressBar progressBar = GetProgressBarForVideo(videoName);
+            if (progressBar != null)
+            {
+                logger.Info($"Found progress bar for video: {videoName}, cancelling it.");
+                SafeCancelProgressBar(progressBar);
+            }
+        }
+
         private void SafeCancelProgressBar(System.Windows.Forms.ProgressBar progressBar)
         {
             if (progressBar.InvokeRequired)
@@ -509,16 +532,15 @@ namespace Robin
             }
             else
             {
+                progressBar.ForeColor = System.Drawing.Color.LightGray;
                 progressBar.BackColor = System.Drawing.Color.LightGray;
+                progressBar.SetState(ColorBar.Color.Red, progressBar.Value);
             }
         }
-        private void CancelProgressBarForVideo(String videoName)
+
+        public string GetVideoTitleFromListItem(ListViewItem item)
         {
-            System.Windows.Forms.ProgressBar progressBar = GetProgressBarForVideo(videoName);
-            if (progressBar != null)
-            {
-                SafeCancelProgressBar(progressBar);
-            }
+            return item.SubItems[videoListViewItemTitle].Text;
         }
 
         public void UpdateDownloadStatus(ListViewItem item, string status)

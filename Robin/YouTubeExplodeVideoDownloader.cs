@@ -231,6 +231,23 @@ namespace Robin
             }
         }
 
+        private void CleanupPartialFile(string videoPath)
+        {
+            // Clean up partial file if it exists
+            if (File.Exists(videoPath))
+            {
+                try
+                {
+                    File.Delete(videoPath);
+                    logger.Info($"Deleted partial file: {videoPath}");
+                }
+                catch (Exception ex)
+                {
+                    logger.Error($"Failed to delete partial file {videoPath}: {ex.Message}");
+                }
+            }
+        }
+
         private async Task DownloadVideoAsync_Explode(RobinForm form,
                                                       ListViewItem listItem,
                                                       YoutubeClient youtube,
@@ -263,23 +280,25 @@ namespace Robin
             catch (OperationCanceledException)
             {
                 logger.Info($"Download cancelled for video: {videoId}");
-                
-                // Clean up partial file if it exists
-                if (File.Exists(videoPath))
-                {
-                    try
-                    {
-                        File.Delete(videoPath);
-                        logger.Info($"Deleted partial file: {videoPath}");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error($"Failed to delete partial file {videoPath}: {ex.Message}");
-                    }
-                }
-                
+                CleanupPartialFile(videoPath);
+
                 // Re-throw to notify caller
                 throw;
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Download failed for video: {videoId}");
+                RobinUtils.DisplayAndLogException(e);
+                
+                // Update UI to show error state
+                form.UpdateDownloadStatus(listItem, "Failed");
+                string videoTitle = form.GetVideoTitleFromListItem(listItem);
+                form.CancelProgressBarForVideo(videoTitle);
+                form.DisableCancelButton(videoTitle);
+                CleanupPartialFile(videoPath);
+
+                // Re-throw to notify caller
+                //throw;
             }
         }
     }
