@@ -10,7 +10,6 @@ namespace Robin
     internal interface YouTubeVideoDownloader
     {
         ValueTask<string> GetVideoTitle(string url);
-        void DownloadVideo(RobinForm form, string url);
-        void DownloadVideo(RobinForm form, string url, CancellationToken cancellationToken);
+        void DownloadVideo(RobinForm form, string url, DownloadState state);
     }
 }

@@ -22,11 +22,6 @@ namespace Robin
         private static int videoListViewItemDownloadStatus = 1;
         private static int videoListViewItemDownloadedLocation = 2;
 
-        private static string videoStatusDowloading = "Downloading";
-        private static string videoStatusDone = "Done";
-        private static string videoStatusCancelled = "Cancelled";
-        private static string videoStatusFailed = "Failed";
-
         YouTubeVideoDownloader videoDownloader = new YouTubeExplodeVideoDownloader(baseFilePath);
         private Dictionary<string, DownloadState> activeDownloads = new Dictionary<string, DownloadState>();
 
@@ -89,12 +84,13 @@ namespace Robin
                 System.Windows.Forms.ListView.SelectedListViewItemCollection selectedItems = listView_downloads.SelectedItems;
                 if (selectedItems.Count > 0)
                 {
+                    logger.Info("[SetDownloadListClickHandler] Selected Items count: " + selectedItems.Count);
                     if (selectedItems.Count == 1)
                     {
                         ListViewItem selected = selectedItems[0];
                         if (selected.SubItems.Count > 2)
                         {
-                            string videoLocation = selected.SubItems[2].Text;
+                            string videoLocation = selected.SubItems[videoListViewItemDownloadedLocation].Text;
                             OpenVideo(videoLocation);
                         }
                     }
@@ -137,7 +133,7 @@ namespace Robin
             {
                 logger.Info("Found video list item with same video URL: {0}", videoUrl);
 
-                if (videoListViewItem.SubItems[videoListViewItemDownloadStatus].Text == videoStatusDone)
+                if (videoListViewItem.SubItems[videoListViewItemDownloadStatus].Text == RobinVideoStatus.Done)
                 {
                     logger.Info("Found existing, already downloaded video with same URL {0} in downloads list", videoUrl);
                     DialogResult result = MessageBox.Show("The video with URL: " + videoUrl + "  has already been downloaded, " +
@@ -156,7 +152,7 @@ namespace Robin
                         // Do nothing
                         ClearVideoUrlTextbox();
                     }
-                } else if (videoListViewItem.SubItems[videoListViewItemDownloadStatus].Text == videoStatusDowloading)
+                } else if (videoListViewItem.SubItems[videoListViewItemDownloadStatus].Text == RobinVideoStatus.Dowloading)
                 {
                     logger.Info("Found existing currently downloading video with same URL {0} in downloads list", videoUrl);
                     DialogResult result = MessageBox.Show("The video with URL: " + videoUrl + "  already has a download " +
@@ -191,20 +187,26 @@ namespace Robin
         {
             // Create a new download state for tracking
             DownloadState downloadState = new DownloadState();
-            downloadState.VideoUrl = videoUrl;
+            lock (downloadState)
+            {
+                downloadState.VideoUrl = videoUrl;
+            }
             
             // We'll set the video title after we get it from the downloader
             // For now, start the download with cancellation support
-            videoDownloader.DownloadVideo(this, videoUrl, downloadState.CancellationTokenSource.Token);
+            videoDownloader.DownloadVideo(this, videoUrl, downloadState);
         }
 
         public void RegisterActiveDownload(string videoTitle, DownloadState downloadState)
         {
             if (!activeDownloads.ContainsKey(videoTitle))
             {
-                downloadState.VideoTitle = videoTitle;
-                activeDownloads[videoTitle] = downloadState;
-                logger.Info($"Registered active download for: {videoTitle}");
+                lock (activeDownloads)
+                {
+                    downloadState.VideoTitle = videoTitle;
+                    activeDownloads[videoTitle] = downloadState;
+                    logger.Info($"Registered active download for: {videoTitle}");
+                }
             }
         }
 
@@ -300,7 +302,7 @@ namespace Robin
         {
             logger.Info($"Valid video title: {videoTitle}");
             ListViewItem videoItem = new ListViewItem(videoTitle);
-            videoItem.SubItems.Add(videoStatusDowloading);
+            videoItem.SubItems.Add(RobinVideoStatus.Dowloading);
             videoItem.SubItems.Add("Download path will appear here");
             videoItem.SubItems.Add("");
             videoItem.SubItems.Add(""); // Column for cancel button
@@ -429,13 +431,13 @@ namespace Robin
                 listView_downloads.BeginUpdate();
                 listItem.SubItems[videoListViewItemTitle].BackColor = SystemColors.Highlight;
                 listItem.SubItems[videoListViewItemTitle].ForeColor = SystemColors.HighlightText;
-                listItem.SubItems[videoListViewItemDownloadStatus].Text = videoStatusDone;
+                listItem.SubItems[videoListViewItemDownloadStatus].Text = RobinVideoStatus.Done;
                 listItem.SubItems[videoListViewItemDownloadedLocation].Text = videoPath;
 
                 SetProgressBarValue(listItem, videoSize);
                 
                 // Hide cancel button when download completes
-                string videoTitle = listItem.SubItems[videoListViewItemTitle].Text;
+                string videoTitle = GetVideoTitleFromListItem(listItem);
                 HideCancelButton(videoTitle);
 
                 // Remove from active downloads if exists
@@ -464,7 +466,7 @@ namespace Robin
                     ListViewItem videoItem = listView_downloads.FindItemWithText(videoTitle);
                     if (videoItem != null)
                     {
-                        UpdateDownloadStatus(videoItem, videoStatusCancelled);
+                        UpdateDownloadStatus(videoItem, RobinVideoStatus.Cancelled);
                         DisableCancelButton(videoTitle);
                         CancelProgressBarForVideo(videoTitle);
                     }
@@ -553,12 +555,12 @@ namespace Robin
             else
             {
                 item.SubItems[videoListViewItemDownloadStatus].Text = status;
-                if (status == videoStatusCancelled)
+                if (status == RobinVideoStatus.Cancelled)
                 {
                     item.SubItems[videoListViewItemTitle].BackColor = System.Drawing.Color.LightGray;
                     item.SubItems[videoListViewItemTitle].ForeColor = System.Drawing.Color.DarkGray;
                 }
-                else if (status == videoStatusFailed)
+                else if (status == RobinVideoStatus.Failed)
                 {
                     item.SubItems[videoListViewItemTitle].BackColor = System.Drawing.Color.LightPink;
                     item.SubItems[videoListViewItemTitle].ForeColor = System.Drawing.Color.DarkRed;
@@ -598,6 +600,7 @@ namespace Robin
 
         private void OpenVideo(string videoPath)
         {
+            logger.Info("Opening video at path: {0}", videoPath);
             System.Diagnostics.Process.Start(videoPath);
         }
 
