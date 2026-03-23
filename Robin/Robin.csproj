@@ -306,8 +306,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RobinUpdater.cs" />
     <Compile Include="RobinUtils.cs" />
-    <Compile Include="RobinVideoDownloader.cs" />
-    <Compile Include="RobinVideoInfo.cs" />
+<Compile Include="RobinVideoInfo.cs" />
     <Compile Include="RobinVideoStatus.cs" />
     <Compile Include="YouTubeExplodeVideoDownloader.cs" />
     <Compile Include="YouTubeVideoDownloader.cs" />

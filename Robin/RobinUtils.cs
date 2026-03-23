@@ -34,7 +34,7 @@ namespace Robin
             catch (Exception e)
             {
                 DisplayAndLogException(e);
-                throw e;
+                throw;
             }
         }
 

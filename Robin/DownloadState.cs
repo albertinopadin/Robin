@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace Robin
 {
-    public class DownloadState
+    public class DownloadState : IDisposable
     {
         public CancellationTokenSource CancellationTokenSource { get; set; }
         public CancellationToken CancellationToken => CancellationTokenSource.Token;
@@ -22,7 +22,6 @@ namespace Robin
         public DateTime StartTime { get; set; }
         public bool IsCompleted { get; set; }
         public bool IsCancelled { get; set; }
-        
 
         public DownloadState()
         {
