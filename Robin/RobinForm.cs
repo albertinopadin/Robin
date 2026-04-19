@@ -262,80 +262,52 @@ namespace Robin
             return listView_downloads.Controls.OfType<ProgressBar>().FirstOrDefault(i => i.Name == videoName);
         }
 
-        public void SetProgressBarValue(ListViewItem item, int value)
+        public void AddVideoToDownloadsList(DownloadState state, int videoSize)
         {
-            string videoName = item.SubItems[0].Text;
-            ProgressBar progressBar = GetProgressBarForVideo(videoName);
-
-            if (progressBar != null)
-            {
-                SafeSetProgressBarValue(progressBar, value);
-            }
-        }
-
-        private void SafeSetProgressBarValue(ProgressBar progressBar, int value)
-        {
-            if (progressBar.InvokeRequired)
-            {
-                Action threadsafeCall = delegate { SafeSetProgressBarValue(progressBar, value); };
-                progressBar.Invoke(threadsafeCall);
-            }
-            else
-            {
-                progressBar.Value = value;
-            }
-        }
-
-        public ListViewItem AddVideoToDownloadsList(string videoTitle, int videoSize)
-        {
-            logger.Info($"Valid video title: {videoTitle}");
-            ListViewItem videoItem = new ListViewItem(videoTitle);
-            videoItem.SubItems.Add(RobinVideoStatus.Dowloading);
-            videoItem.SubItems.Add("Download path will appear here");
-            videoItem.SubItems.Add("");
-            videoItem.SubItems.Add("");
+            logger.Info($"Valid video title: {state.VideoTitle}");
 
             if (listView_downloads.InvokeRequired)
             {
-                Action threadsafeCall = delegate { AddVideoItemToDownloadsList(videoItem, videoTitle, videoSize); };
+                Action threadsafeCall = delegate { AddVideoItemToDownloadsList(state, videoSize); };
                 listView_downloads.Invoke(threadsafeCall);
             }
             else
             {
-                AddVideoItemToDownloadsList(videoItem, videoTitle, videoSize);
+                AddVideoItemToDownloadsList(state, videoSize);
             }
-
-            return videoItem;
         }
 
-        private void AddVideoItemToDownloadsList(ListViewItem videoItem, string videoTitle, int videoSize)
+        private void AddVideoItemToDownloadsList(DownloadState state, int videoSize)
         {
             listView_downloads.BeginUpdate();
 
+            ListViewItem videoItem = new ListViewItem(state.VideoTitle);
+            videoItem.SubItems.Add(RobinVideoStatus.Dowloading);
+            videoItem.SubItems.Add("Download path will appear here");
+            videoItem.SubItems.Add("");
+            videoItem.SubItems.Add("");
             listView_downloads.Items.Add(videoItem);
+            state.ListViewItem = videoItem;
 
-            Rectangle progressBarBounds = videoItem.SubItems[3].Bounds;
-            AddProgressBar(progressBarBounds, videoTitle, videoSize);
+            state.ProgressBar = CreateProgressBar(videoItem.SubItems[3].Bounds, state.VideoTitle, videoSize);
+            listView_downloads.Controls.Add(state.ProgressBar);
 
-            Rectangle cancelButtonBounds = videoItem.SubItems[4].Bounds;
-            AddCancelButton(cancelButtonBounds, videoTitle);
+            AddCancelButton(videoItem.SubItems[4].Bounds, state.VideoTitle);
 
             listView_downloads.EndUpdate();
         }
 
-        private void AddProgressBar(Rectangle bounds, string videoTitle, int videoSize)
+        private ProgressBar CreateProgressBar(Rectangle bounds, string videoTitle, int videoSize)
         {
             ProgressBar progressBar = new ProgressBar();
             progressBar.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
-            logger.Info($"[AddProgressBar] Progress bar bounds: {bounds.X}, {bounds.Y}, {bounds.Width}, {bounds.Height}");
             progressBar.Minimum = 0;
-            progressBar.Maximum = videoSize;
+            progressBar.Maximum = Math.Max(videoSize, 1);
             progressBar.Value = 1;
             progressBar.Step = 1;
             progressBar.Name = videoTitle;
             progressBar.Visible = true;
-
-            listView_downloads.Controls.Add(progressBar);
+            return progressBar;
         }
 
         private void AddCancelButton(Rectangle bounds, string videoTitle)
@@ -403,30 +375,35 @@ namespace Robin
             }
         }
 
-        public void NotifyDownloadFinished(ListViewItem listItem, string videoPath, int videoSize)
+        public void NotifyDownloadFinished(DownloadState state)
         {
             if (listView_downloads.InvokeRequired)
             {
-                Action threadsafeCall = delegate { NotifyDownloadFinished(listItem, videoPath, videoSize); };
+                Action threadsafeCall = delegate { NotifyDownloadFinished(state); };
                 listView_downloads.Invoke(threadsafeCall);
             }
             else
             {
                 listView_downloads.BeginUpdate();
+
+                ListViewItem listItem = state.ListViewItem;
                 listItem.SubItems[videoListViewItemTitle].BackColor = SystemColors.Highlight;
                 listItem.SubItems[videoListViewItemTitle].ForeColor = SystemColors.HighlightText;
                 listItem.SubItems[videoListViewItemDownloadStatus].Text = RobinVideoStatus.Done;
-                listItem.SubItems[videoListViewItemDownloadedLocation].Text = videoPath;
+                listItem.SubItems[videoListViewItemDownloadedLocation].Text = state.FilePath;
 
-                SetProgressBarValue(listItem, videoSize);
-
-                string videoTitle = GetVideoTitleFromListItem(listItem);
-                HideCancelButton(videoTitle);
-
-                if (activeDownloads.TryRemove(videoTitle, out DownloadState state))
+                ProgressBar bar = state.ProgressBar;
+                if (bar != null && !bar.IsDisposed)
                 {
-                    state.IsCompleted = true;
-                    state.Dispose();
+                    bar.Value = bar.Maximum;
+                }
+
+                HideCancelButton(state.VideoTitle);
+
+                if (activeDownloads.TryRemove(state.VideoTitle, out DownloadState removed))
+                {
+                    removed.IsCompleted = true;
+                    removed.Dispose();
                 }
 
                 listView_downloads.EndUpdate();
@@ -448,7 +425,7 @@ namespace Robin
                     {
                         UpdateDownloadStatus(videoItem, RobinVideoStatus.Cancelled);
                         DisableCancelButton(videoTitle);
-                        CancelProgressBarForVideo(videoTitle);
+                        CancelProgressBarForVideo(state);
                     }
                 }
                 catch (Exception ex)
@@ -489,13 +466,12 @@ namespace Robin
             }
         }
 
-        public void CancelProgressBarForVideo(string videoName)
+        public void CancelProgressBarForVideo(DownloadState state)
         {
-            logger.Info($"Cancelling progress bar for video: {videoName}");
-            ProgressBar progressBar = GetProgressBarForVideo(videoName);
-            if (progressBar != null)
+            logger.Info($"Cancelling progress bar for video: {state.VideoTitle}");
+            ProgressBar progressBar = state.ProgressBar;
+            if (progressBar != null && !progressBar.IsDisposed)
             {
-                logger.Info($"Found progress bar for video: {videoName}, cancelling it.");
                 SafeCancelProgressBar(progressBar);
             }
         }

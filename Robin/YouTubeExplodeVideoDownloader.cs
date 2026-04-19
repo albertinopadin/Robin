@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,20 +17,43 @@ namespace Robin
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private static readonly HttpClient sharedHttpClient = CreateSharedHttpClient();
+
         private readonly YoutubeClient youtube;
         private readonly string baseFilePath;
         private readonly string ffmpegPath;
+
+        private readonly ConcurrentDictionary<string, YoutubeExplode.Videos.Video> videoInfoCache
+            = new ConcurrentDictionary<string, YoutubeExplode.Videos.Video>();
+
+        private const int ProgressThrottleMs = 100;
+
+        private static HttpClient CreateSharedHttpClient()
+        {
+            var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false,
+            };
+            var client = new HttpClient(handler, disposeHandler: true);
+            client.Timeout = TimeSpan.FromHours(1);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            return client;
+        }
 
         public YouTubeExplodeVideoDownloader(string baseFilePath)
         {
             this.baseFilePath = baseFilePath;
             this.ffmpegPath = RobinUtils.GetPathToFFMPEG();
-            youtube = new YoutubeClient();
+            youtube = new YoutubeClient(sharedHttpClient);
         }
 
         public async ValueTask<string> GetVideoTitle(string url)
         {
-            var videoInfo = await GetVideoInfo(url);
+            var videoInfo = await youtube.Videos.GetAsync(url).ConfigureAwait(false);
+            videoInfoCache[url] = videoInfo;
             return videoInfo.Title;
         }
 
@@ -37,7 +62,7 @@ namespace Robin
             form.SetCursorLoading();
             try
             {
-                await DownloadBestVideo(form, url, true, state);
+                await DownloadBestVideo(form, url, state).ConfigureAwait(false);
             }
             finally
             {
@@ -45,78 +70,64 @@ namespace Robin
             }
         }
 
-        private async ValueTask<YoutubeExplode.Videos.Video> GetVideoInfo(string videoUrl)
+        private async Task DownloadBestVideo(RobinForm form, string videoUrl, DownloadState state)
         {
-            return await youtube.Videos.GetAsync(videoUrl);
-        }
-
-        private async Task DownloadBestVideo(RobinForm form,
-                                             string videoUrl,
-                                             bool getManifest,
-                                             DownloadState state)
-        {
-            var videoInfo = await GetVideoInfo(videoUrl);
+            if (!videoInfoCache.TryRemove(videoUrl, out var videoInfo))
+            {
+                videoInfo = await youtube.Videos.GetAsync(videoUrl).ConfigureAwait(false);
+            }
 
             state.VideoId = videoInfo.Id;
             state.VideoUrl = videoUrl;
             state.VideoTitle = MakeValidVideoTitle(videoInfo.Title);
 
-            if (getManifest)
-            {
-                try
-                {
-                    var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl);
-                    await DownloadBestVideoWithManifest(form, videoUrl, streamManifest, state);
-                }
-                catch (HttpRequestException ex)
-                {
-                    logger.Error("Error getting stream manifest...");
-                    logger.Error(ex);
-                    logger.Info("Trying to download video without first getting stream manifest...");
-                    await DownloadBestVideo(form, videoUrl, false, state);
-                }
-            }
-            else
-            {
-                state.VideoResolution = "UNKNOWN_RESOLUTION";
-                state.Bitrate = "UNKNOWN_BITRATE";
-                state.SizeInMegabytes = 9.999;
-                state.FileExtension = "mp4";
-
-                await DownloadVideo_Explode(form, youtube, state);
-            }
-        }
-
-        private async Task DownloadBestVideoWithManifest(RobinForm form,
-                                                         string videoUrl,
-                                                         StreamManifest streamManifest,
-                                                         DownloadState state)
-        {
+            StreamManifest manifest;
             try
             {
-                var videoStreams = streamManifest.GetVideoStreams();
-
-                if (videoStreams.Any())
-                {
-                    var maxVideoQualityStreamInfo = videoStreams.GetWithHighestVideoQuality();
-                    logger.Info($"maxVideoQualityStreamInfo: {maxVideoQualityStreamInfo}");
-
-                    state.VideoResolution = maxVideoQualityStreamInfo.VideoResolution.ToString();
-                    state.Bitrate = maxVideoQualityStreamInfo.Bitrate.ToString();
-                    state.SizeInMegabytes = maxVideoQualityStreamInfo.Size.MegaBytes;
-                    state.FileExtension = maxVideoQualityStreamInfo.Container.Name;
-
-                    await DownloadVideo_Explode(form, youtube, state);
-                }
-                else
-                {
-                    MessageBox.Show($"No video streams found for URL {videoUrl}.");
-                }
+                manifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                RobinUtils.DisplayAndLogException(ex);
+                logger.Error(ex, "Manifest fetch failed; falling back to direct live-stream download.");
+                await DownloadLiveFallback(form, state).ConfigureAwait(false);
+                return;
             }
+
+            var videoStream = manifest.GetVideoOnlyStreams()
+                                      .Where(s => s.Container == Container.Mp4)
+                                      .GetWithHighestVideoQuality()
+                              ?? manifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
+
+            var audioStream = manifest.GetAudioOnlyStreams()
+                                      .Where(s => s.Container == Container.Mp4)
+                                      .GetWithHighestBitrate()
+                              ?? manifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+
+            if (videoStream == null || audioStream == null)
+            {
+                throw new InvalidOperationException($"No usable streams found for URL {videoUrl}.");
+            }
+
+            logger.Info($"Selected video stream: {videoStream}");
+            logger.Info($"Selected audio stream: {audioStream}");
+
+            state.SelectedStreams = new IStreamInfo[] { videoStream, audioStream };
+            state.VideoResolution = videoStream.VideoResolution.ToString();
+            state.Bitrate = videoStream.Bitrate.ToString();
+            state.SizeInMegabytes = videoStream.Size.MegaBytes + audioStream.Size.MegaBytes;
+            state.FileExtension = "mp4";
+
+            await DownloadVideo_Explode(form, state).ConfigureAwait(false);
+        }
+
+        private async Task DownloadLiveFallback(RobinForm form, DownloadState state)
+        {
+            state.SelectedStreams = null;
+            state.VideoResolution = "UNKNOWN_RESOLUTION";
+            state.Bitrate = "UNKNOWN_BITRATE";
+            state.SizeInMegabytes = 0;
+            state.FileExtension = "mp4";
+            await DownloadVideo_Explode(form, state).ConfigureAwait(false);
         }
 
         private string MakeValidVideoTitle(string rawVideoTitle)
@@ -125,7 +136,7 @@ namespace Robin
             return string.Concat(rawVideoTitle.Split(Path.GetInvalidFileNameChars())).Trim();
         }
 
-        private async Task DownloadVideo_Explode(RobinForm form, YoutubeClient youtube, DownloadState state)
+        private async Task DownloadVideo_Explode(RobinForm form, DownloadState state)
         {
             form.SetVideoInfo(new RobinVideoInfo(state.VideoTitle,
                                                  state.FileExtension,
@@ -133,36 +144,30 @@ namespace Robin
                                                  state.Bitrate,
                                                  state.SizeInMegabytes.ToString("n2")));
 
-            string validVideoTitle = state.VideoTitle;
-            ListViewItem listItem = form.AddVideoToDownloadsList(validVideoTitle, (int)state.SizeInMegabytes);
-            string videoPath = Path.Combine(baseFilePath, $"{validVideoTitle}.{state.FileExtension}");
-
-            state.FilePath = videoPath;
-            state.ListViewItem = listItem;
-
-            form.RegisterActiveDownload(validVideoTitle, state);
+            state.FilePath = Path.Combine(baseFilePath, $"{state.VideoTitle}.{state.FileExtension}");
+            form.AddVideoToDownloadsList(state, (int)state.SizeInMegabytes);
+            form.RegisterActiveDownload(state.VideoTitle, state);
 
             try
             {
-                await DownloadVideoAsync_Explode(form, listItem, youtube, state);
+                await DownloadVideoAsync_Explode(form, state).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                logger.Info($"Download cancelled for video: {validVideoTitle}");
-                UpdateDownloadStatus(RobinVideoStatus.Cancelled, validVideoTitle, listItem, form);
+                logger.Info($"Download cancelled for video: {state.VideoTitle}");
+                UpdateDownloadStatus(RobinVideoStatus.Cancelled, state, form);
             }
             catch (Exception e)
             {
-                logger.Error($"Download failed for video: {validVideoTitle}");
-                RobinUtils.DisplayAndLogException(e);
-                UpdateDownloadStatus(RobinVideoStatus.Failed, validVideoTitle, listItem, form);
+                // Inner already logged + dialogued + marked the item failed. Don't double-report.
+                logger.Error(e, $"Download failed for video: {state.VideoTitle}");
             }
         }
 
-        private void UpdateDownloadStatus(string status, string videoTitle, ListViewItem listItem, RobinForm form)
+        private void UpdateDownloadStatus(string status, DownloadState state, RobinForm form)
         {
-            form.UpdateDownloadStatus(listItem, status);
-            form.CleanupDownload(videoTitle);
+            form.UpdateDownloadStatus(state.ListViewItem, status);
+            form.CleanupDownload(state.VideoTitle);
         }
 
         private void CleanupPartialFile(string videoPath)
@@ -181,31 +186,51 @@ namespace Robin
             }
         }
 
-        private async Task DownloadVideoAsync_Explode(RobinForm form,
-                                                      ListViewItem listItem,
-                                                      YoutubeClient youtube,
-                                                      DownloadState state)
+        private async Task DownloadVideoAsync_Explode(RobinForm form, DownloadState state)
         {
             form.ClearVideoUrlTextbox();
 
             var progress = new Progress<double>(p =>
             {
-                int progressBarValue = (int)(p * state.SizeInMegabytes);
-                if (progressBarValue % 2 == 0)
+                int now = Environment.TickCount;
+                bool isFinal = p >= 1.0;
+                if (!isFinal && now - state.LastProgressTickMs < ProgressThrottleMs) return;
+                state.LastProgressTickMs = now;
+
+                int value = (int)(p * state.SizeInMegabytes);
+                var bar = state.ProgressBar;
+                if (bar == null || bar.IsDisposed || !bar.IsHandleCreated) return;
+
+                bar.BeginInvoke((Action)(() =>
                 {
-                    form.SetProgressBarValue(listItem, progressBarValue);
-                }
+                    if (!bar.IsDisposed) bar.Value = Math.Min(Math.Max(value, bar.Minimum), bar.Maximum);
+                }));
             });
 
             try
             {
-                await youtube.Videos.DownloadAsync(state.VideoId,
-                                                   state.FilePath,
-                                                   converter => converter.SetFFmpegPath(this.ffmpegPath),
-                                                   progress,
-                                                   state.CancellationToken);
-
-                form.NotifyDownloadFinished(listItem, state.FilePath, (int)state.SizeInMegabytes);
+                if (state.SelectedStreams != null)
+                {
+                    await youtube.Videos.DownloadAsync(
+                        state.SelectedStreams,
+                        new ConversionRequestBuilder(state.FilePath)
+                            .SetFFmpegPath(this.ffmpegPath)
+                            .SetContainer(Container.Mp4)
+                            .SetPreset(ConversionPreset.UltraFast)
+                            .Build(),
+                        progress,
+                        state.CancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await youtube.Videos.DownloadAsync(
+                        state.VideoUrl,
+                        state.FilePath,
+                        o => o.SetFFmpegPath(this.ffmpegPath)
+                              .SetPreset(ConversionPreset.UltraFast),
+                        progress,
+                        state.CancellationToken).ConfigureAwait(false);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -215,16 +240,58 @@ namespace Robin
             }
             catch (Exception e)
             {
-                logger.Error($"Download failed for video: {state.VideoId}");
-                RobinUtils.DisplayAndLogException(e);
+                // YoutubeExplode.Converter + CliWrap + polyshim on .NET Framework 4.8 throws
+                // NotSupportedException during FFmpeg stderr stream teardown AFTER the output
+                // file is already written. If the exception matches that pattern and the file
+                // looks complete, treat as success instead of deleting the user's video.
+                if (IsCliWrapTeardownBug(e) && IsOutputFileValid(state.FilePath))
+                {
+                    logger.Warn(e, $"Ignoring CliWrap/polyshim teardown exception; output looks complete: {state.FilePath}");
+                }
+                else
+                {
+                    logger.Error(e, $"Download failed for video: {state.VideoId}");
+                    RobinUtils.DisplayAndLogException(e);
 
-                form.UpdateDownloadStatus(listItem, RobinVideoStatus.Failed);
-                string videoTitle = form.GetVideoTitleFromListItem(listItem);
-                form.CancelProgressBarForVideo(videoTitle);
-                form.DisableCancelButton(videoTitle);
-                CleanupPartialFile(state.FilePath);
+                    form.UpdateDownloadStatus(state.ListViewItem, RobinVideoStatus.Failed);
+                    form.CancelProgressBarForVideo(state);
+                    form.DisableCancelButton(state.VideoTitle);
+                    CleanupPartialFile(state.FilePath);
 
-                throw;
+                    throw;
+                }
+            }
+
+            // Post-download: completing the UI state is a separate concern from the download itself.
+            // A failure here must not delete the successfully-saved file.
+            try
+            {
+                form.NotifyDownloadFinished(state);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, $"NotifyDownloadFinished threw for {state.VideoTitle}; file at {state.FilePath} is preserved.");
+            }
+        }
+
+        private static bool IsCliWrapTeardownBug(Exception e)
+        {
+            for (Exception current = e; current != null; current = current.InnerException)
+            {
+                if (current is NotSupportedException) return true;
+            }
+            return false;
+        }
+
+        private static bool IsOutputFileValid(string path)
+        {
+            try
+            {
+                return File.Exists(path) && new FileInfo(path).Length > 0;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

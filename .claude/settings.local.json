@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:tyrrrz.me)",
+      "WebFetch(domain:news.ycombinator.com)",
+      "WebFetch(domain:devblogs.microsoft.com)"
     ],
     "deny": [],
     "ask": []

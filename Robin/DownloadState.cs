@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using YoutubeExplode.Videos.Streams;
 
 namespace Robin
 {
@@ -19,6 +21,9 @@ namespace Robin
         public string FileExtension { get; set; }
         public string FilePath { get; set; }
         public ListViewItem ListViewItem { get; set; }
+        public ProgressBar ProgressBar { get; set; }
+        public IReadOnlyList<IStreamInfo> SelectedStreams { get; set; }
+        public int LastProgressTickMs;
         public DateTime StartTime { get; set; }
         public bool IsCompleted { get; set; }
         public bool IsCancelled { get; set; }

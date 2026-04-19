@@ -18,8 +18,30 @@ namespace Robin
 
         private static readonly string RobinErrorCaption = "Robin Error";
 
+        private static readonly string FFmpegCachePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Robin", "ffmpeg_path.txt");
+
         public static string GetPathToFFMPEG()
         {
+            try
+            {
+                if (File.Exists(FFmpegCachePath))
+                {
+                    string cached = File.ReadAllText(FFmpegCachePath).Trim();
+                    if (File.Exists(cached))
+                    {
+                        logger.Info("[GetPathToFFMPEG] using cached path: {0}", cached);
+                        return cached;
+                    }
+                    logger.Info("[GetPathToFFMPEG] cached path {0} is stale; re-resolving.", cached);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "[GetPathToFFMPEG] cache read failed; re-resolving.");
+            }
+
             try
             {
                 string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -29,6 +51,17 @@ namespace Robin
                 string ffmpegWinGetPkgPath = Path.Combine(fullWinGetPackagesPath, ffmpegBaseWinGetFolderName);
                 string ffmpegVersionFolderName = GetDirectoryThatBeginsWith("ffmpeg", ffmpegWinGetPkgPath);
                 string ffmpegExePath = Path.Combine(ffmpegWinGetPkgPath, ffmpegVersionFolderName, "bin", ffmpegExeFilename);
+
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(FFmpegCachePath));
+                    File.WriteAllText(FFmpegCachePath, ffmpegExePath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "[GetPathToFFMPEG] cache write failed (non-fatal).");
+                }
+
                 return ffmpegExePath;
             }
             catch (Exception e)
