@@ -71,7 +71,7 @@ namespace Robin
             }
         }
 
-        private static string GetDirectoryThatBeginsWith(string startsWithStr, string baseDir)
+        internal static string GetDirectoryThatBeginsWith(string startsWithStr, string baseDir)
         {
             logger.Info("[GetDirectoryThatBeginsWith] Base Dir: " + baseDir);
             string[] matchingDirs = Directory.GetDirectories(baseDir, startsWithStr + "*", SearchOption.TopDirectoryOnly);
