@@ -5,7 +5,13 @@
       "WebSearch",
       "WebFetch(domain:tyrrrz.me)",
       "WebFetch(domain:news.ycombinator.com)",
-      "WebFetch(domain:devblogs.microsoft.com)"
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(where msbuild *)",
+      "Read(//c/Program Files/Microsoft Visual Studio//**)",
+      "Read(//c/Program Files \\(x86\\)/Microsoft Visual Studio/Installer//**)",
+      "Bash(dotnet test *)"
     ],
     "deny": [],
     "ask": []
