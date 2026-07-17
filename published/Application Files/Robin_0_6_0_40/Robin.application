@@ -14,14 +14,14 @@
     <framework targetVersion="4.8" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="Application Files\Robin_0_6_0_40\Robin.exe.manifest" size="21366">
+    <dependentAssembly dependencyType="install" codebase="Application Files\Robin_0_6_0_40\Robin.exe.manifest" size="20732">
       <assemblyIdentity name="Robin.exe" version="0.6.0.40" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>/99ElwWH7HISgD87glgs4oq7afEmBILg6QhNlkSEPpk=</dsig:DigestValue>
+        <dsig:DigestValue>a4ICbmBXqu/v9ygUMhOp4M6EUwzNF04vixTsvi7SkaM=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

@@ -151,14 +151,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Robin.exe" size="372224">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Robin.exe" size="370176">
       <assemblyIdentity name="Robin" version="0.3.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>QLrJfqJkiDoacXHagHGxG/8as4xUByYyj62DbwIuAuk=</dsig:DigestValue>
+        <dsig:DigestValue>xerskPgj5opphZ5zbiJ8KwQVL2W7smAb9C88f5p0wUg=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -327,18 +327,6 @@
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
         <dsig:DigestValue>uK8skCnlIWUeWHg/FFbt8S5Lwy4sbmI82wPReQ3awDg=</dsig:DigestValue>
-      </hash>
-    </dependentAssembly>
-  </dependency>
-  <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="libvideo.dll" size="59904">
-      <assemblyIdentity name="libvideo" version="3.3.1.0" language="neutral" processorArchitecture="msil" />
-      <hash>
-        <dsig:Transforms>
-          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
-        </dsig:Transforms>
-        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>rytrCuyAUshLRhnhC5kGaaK7vwXFOqtuFCT5jGk6z7o=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
