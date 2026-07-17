@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using YoutubeExplode;
 using YoutubeExplode.Converter;
 using YoutubeExplode.Videos.Streams;
 
@@ -18,7 +17,7 @@ namespace Robin
 
         private static readonly HttpClient sharedHttpClient = CreateSharedHttpClient();
 
-        private readonly YoutubeClient youtube;
+        private readonly IYoutubeClientAdapter client;
         private readonly string baseFilePath;
         private readonly string ffmpegPath;
 
@@ -43,15 +42,21 @@ namespace Robin
         }
 
         public YouTubeExplodeVideoDownloader(string baseFilePath)
+            : this(baseFilePath, new YoutubeClientAdapter(sharedHttpClient), RobinUtils.GetPathToFFMPEG())
+        {
+        }
+
+        // Test-visible constructor ([InternalsVisibleTo("Robin.Tests")] grants access).
+        internal YouTubeExplodeVideoDownloader(string baseFilePath, IYoutubeClientAdapter client, string ffmpegPath)
         {
             this.baseFilePath = baseFilePath;
-            this.ffmpegPath = RobinUtils.GetPathToFFMPEG();
-            youtube = new YoutubeClient(sharedHttpClient);
+            this.client = client;
+            this.ffmpegPath = ffmpegPath;
         }
 
         public async ValueTask<string> GetVideoTitle(string url)
         {
-            var videoInfo = await youtube.Videos.GetAsync(url).ConfigureAwait(false);
+            var videoInfo = await client.GetVideoAsync(url).ConfigureAwait(false);
             videoInfoCache[url] = videoInfo;
             return videoInfo.Title;
         }
@@ -73,7 +78,7 @@ namespace Robin
         {
             if (!videoInfoCache.TryRemove(videoUrl, out var videoInfo))
             {
-                videoInfo = await youtube.Videos.GetAsync(videoUrl).ConfigureAwait(false);
+                videoInfo = await client.GetVideoAsync(videoUrl).ConfigureAwait(false);
             }
 
             state.VideoId = videoInfo.Id;
@@ -83,7 +88,7 @@ namespace Robin
             StreamManifest manifest;
             try
             {
-                manifest = await youtube.Videos.Streams.GetManifestAsync(videoUrl).ConfigureAwait(false);
+                manifest = await client.GetManifestAsync(videoUrl).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
@@ -129,7 +134,7 @@ namespace Robin
             await DownloadVideo_Explode(notifier, state).ConfigureAwait(false);
         }
 
-        private string MakeValidVideoTitle(string rawVideoTitle)
+        internal static string MakeValidVideoTitle(string rawVideoTitle)
         {
             logger.Info($"Raw video title: {rawVideoTitle}");
             return string.Concat(rawVideoTitle.Split(Path.GetInvalidFileNameChars())).Trim();
@@ -204,7 +209,7 @@ namespace Robin
             {
                 if (state.SelectedStreams != null)
                 {
-                    await youtube.Videos.DownloadAsync(
+                    await client.DownloadMuxedAsync(
                         state.SelectedStreams,
                         new ConversionRequestBuilder(state.FilePath)
                             .SetFFmpegPath(this.ffmpegPath)
@@ -216,7 +221,7 @@ namespace Robin
                 }
                 else
                 {
-                    await youtube.Videos.DownloadAsync(
+                    await client.DownloadDirectAsync(
                         state.VideoUrl,
                         state.FilePath,
                         o => o.SetFFmpegPath(this.ffmpegPath)
