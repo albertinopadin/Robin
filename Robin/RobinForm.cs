@@ -491,6 +491,17 @@ namespace Robin
             }
         }
 
+        public void ReportDownloadProgress(DownloadState state, int progressValue)
+        {
+            ProgressBar bar = state.ProgressBar;
+            if (bar == null || bar.IsDisposed || !bar.IsHandleCreated) return;
+
+            bar.BeginInvoke((Action)(() =>
+            {
+                if (!bar.IsDisposed) bar.Value = Math.Min(Math.Max(progressValue, bar.Minimum), bar.Maximum);
+            }));
+        }
+
         public string GetVideoTitleFromListItem(ListViewItem item)
         {
             return item.SubItems[videoListViewItemTitle].Text;

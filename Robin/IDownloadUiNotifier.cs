@@ -20,5 +20,6 @@ namespace Robin
         void CancelProgressBarForVideo(DownloadState state);
         void DisableCancelButton(string videoTitle);
         void NotifyDownloadFinished(DownloadState state);
+        void ReportDownloadProgress(DownloadState state, int progressValue);
     }
 }

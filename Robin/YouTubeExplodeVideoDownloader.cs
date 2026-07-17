@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using YoutubeExplode;
 using YoutubeExplode.Converter;
 using YoutubeExplode.Videos.Streams;
@@ -198,13 +197,7 @@ namespace Robin
                 state.LastProgressTickMs = now;
 
                 int value = (int)(p * state.SizeInMegabytes);
-                var bar = state.ProgressBar;
-                if (bar == null || bar.IsDisposed || !bar.IsHandleCreated) return;
-
-                bar.BeginInvoke((Action)(() =>
-                {
-                    if (!bar.IsDisposed) bar.Value = Math.Min(Math.Max(value, bar.Minimum), bar.Maximum);
-                }));
+                notifier.ReportDownloadProgress(state, value);
             });
 
             try
