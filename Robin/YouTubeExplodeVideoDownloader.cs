@@ -97,15 +97,17 @@ namespace Robin
                 return;
             }
 
+            // TryGet* variants return null on an empty sequence; the Get* variants throw,
+            // which would make the ?? fallback to non-mp4 containers unreachable.
             var videoStream = manifest.GetVideoOnlyStreams()
                                       .Where(s => s.Container == Container.Mp4)
-                                      .GetWithHighestVideoQuality()
-                              ?? manifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
+                                      .TryGetWithHighestVideoQuality()
+                              ?? manifest.GetVideoOnlyStreams().TryGetWithHighestVideoQuality();
 
             var audioStream = manifest.GetAudioOnlyStreams()
                                       .Where(s => s.Container == Container.Mp4)
-                                      .GetWithHighestBitrate()
-                              ?? manifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+                                      .TryGetWithHighestBitrate()
+                              ?? manifest.GetAudioOnlyStreams().TryGetWithHighestBitrate();
 
             if (videoStream == null || audioStream == null)
             {

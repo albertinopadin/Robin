@@ -67,6 +67,43 @@ namespace Robin.Tests
         }
 
         [Fact]
+        public async Task DownloadVideo_WebmOnlyManifest_FallsBackToWebmStreams()
+        {
+            var webmVideo = YoutubeTestData.VideoStream(Container.WebM, height: 1080);
+            var webmAudio = YoutubeTestData.AudioStream(Container.WebM);
+            var client = new FakeYoutubeClientAdapter
+            {
+                Manifest = YoutubeTestData.Manifest(webmVideo, webmAudio),
+            };
+            var notifier = new FakeDownloadUiNotifier();
+            using var state = new DownloadState();
+
+            await CreateSut(client).DownloadVideo(notifier, "https://youtu.be/dQw4w9WgXcQ", state);
+
+            var downloaded = client.MuxedDownloadCalls.Should().ContainSingle().Subject;
+            downloaded.Should().Contain(webmVideo).And.Contain(webmAudio);
+            state.FileExtension.Should().Be("mp4", "the conversion request still targets an mp4 container");
+            notifier.FinishedDownloads.Should().ContainSingle();
+        }
+
+        [Fact]
+        public async Task DownloadVideo_ManifestWithNoUsableStreams_ThrowsWithAppMessage()
+        {
+            var client = new FakeYoutubeClientAdapter
+            {
+                Manifest = YoutubeTestData.Manifest(),   // no streams at all
+            };
+            var notifier = new FakeDownloadUiNotifier();
+            using var state = new DownloadState();
+
+            Func<Task> act = () => CreateSut(client).DownloadVideo(notifier, "https://youtu.be/dQw4w9WgXcQ", state);
+
+            await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("*No usable streams*");
+            notifier.SetCursorNormalCalls.Should().Be(1, "the wait cursor must be reset even on failure");
+        }
+
+        [Fact]
         public async Task DownloadVideo_ManifestFailure_FallsBackToDirectDownload()
         {
             var client = new FakeYoutubeClientAdapter
