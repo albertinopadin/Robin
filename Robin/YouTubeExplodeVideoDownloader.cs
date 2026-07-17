@@ -57,20 +57,20 @@ namespace Robin
             return videoInfo.Title;
         }
 
-        public async Task DownloadVideo(RobinForm form, string url, DownloadState state)
+        public async Task DownloadVideo(IDownloadUiNotifier notifier, string url, DownloadState state)
         {
-            form.SetCursorLoading();
+            notifier.SetCursorLoading();
             try
             {
-                await DownloadBestVideo(form, url, state).ConfigureAwait(false);
+                await DownloadBestVideo(notifier, url, state).ConfigureAwait(false);
             }
             finally
             {
-                form.SetCursorNormal();
+                notifier.SetCursorNormal();
             }
         }
 
-        private async Task DownloadBestVideo(RobinForm form, string videoUrl, DownloadState state)
+        private async Task DownloadBestVideo(IDownloadUiNotifier notifier, string videoUrl, DownloadState state)
         {
             if (!videoInfoCache.TryRemove(videoUrl, out var videoInfo))
             {
@@ -89,7 +89,7 @@ namespace Robin
             catch (HttpRequestException ex)
             {
                 logger.Error(ex, "Manifest fetch failed; falling back to direct live-stream download.");
-                await DownloadLiveFallback(form, state).ConfigureAwait(false);
+                await DownloadLiveFallback(notifier, state).ConfigureAwait(false);
                 return;
             }
 
@@ -117,17 +117,17 @@ namespace Robin
             state.SizeInMegabytes = videoStream.Size.MegaBytes + audioStream.Size.MegaBytes;
             state.FileExtension = "mp4";
 
-            await DownloadVideo_Explode(form, state).ConfigureAwait(false);
+            await DownloadVideo_Explode(notifier, state).ConfigureAwait(false);
         }
 
-        private async Task DownloadLiveFallback(RobinForm form, DownloadState state)
+        private async Task DownloadLiveFallback(IDownloadUiNotifier notifier, DownloadState state)
         {
             state.SelectedStreams = null;
             state.VideoResolution = "UNKNOWN_RESOLUTION";
             state.Bitrate = "UNKNOWN_BITRATE";
             state.SizeInMegabytes = 0;
             state.FileExtension = "mp4";
-            await DownloadVideo_Explode(form, state).ConfigureAwait(false);
+            await DownloadVideo_Explode(notifier, state).ConfigureAwait(false);
         }
 
         private string MakeValidVideoTitle(string rawVideoTitle)
@@ -136,26 +136,26 @@ namespace Robin
             return string.Concat(rawVideoTitle.Split(Path.GetInvalidFileNameChars())).Trim();
         }
 
-        private async Task DownloadVideo_Explode(RobinForm form, DownloadState state)
+        private async Task DownloadVideo_Explode(IDownloadUiNotifier notifier, DownloadState state)
         {
-            form.SetVideoInfo(new RobinVideoInfo(state.VideoTitle,
-                                                 state.FileExtension,
-                                                 state.VideoResolution,
-                                                 state.Bitrate,
-                                                 state.SizeInMegabytes.ToString("n2")));
+            notifier.SetVideoInfo(new RobinVideoInfo(state.VideoTitle,
+                                                     state.FileExtension,
+                                                     state.VideoResolution,
+                                                     state.Bitrate,
+                                                     state.SizeInMegabytes.ToString("n2")));
 
             state.FilePath = Path.Combine(baseFilePath, $"{state.VideoTitle}.{state.FileExtension}");
-            form.AddVideoToDownloadsList(state, (int)state.SizeInMegabytes);
-            form.RegisterActiveDownload(state.VideoTitle, state);
+            notifier.AddVideoToDownloadsList(state, (int)state.SizeInMegabytes);
+            notifier.RegisterActiveDownload(state.VideoTitle, state);
 
             try
             {
-                await DownloadVideoAsync_Explode(form, state).ConfigureAwait(false);
+                await DownloadVideoAsync_Explode(notifier, state).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
                 logger.Info($"Download cancelled for video: {state.VideoTitle}");
-                UpdateDownloadStatus(RobinVideoStatus.Cancelled, state, form);
+                UpdateDownloadStatus(RobinVideoStatus.Cancelled, state, notifier);
             }
             catch (Exception e)
             {
@@ -164,10 +164,10 @@ namespace Robin
             }
         }
 
-        private void UpdateDownloadStatus(string status, DownloadState state, RobinForm form)
+        private void UpdateDownloadStatus(string status, DownloadState state, IDownloadUiNotifier notifier)
         {
-            form.UpdateDownloadStatus(state.ListViewItem, status);
-            form.CleanupDownload(state.VideoTitle);
+            notifier.UpdateDownloadStatus(state.ListViewItem, status);
+            notifier.CleanupDownload(state.VideoTitle);
         }
 
         private void CleanupPartialFile(string videoPath)
@@ -186,9 +186,9 @@ namespace Robin
             }
         }
 
-        private async Task DownloadVideoAsync_Explode(RobinForm form, DownloadState state)
+        private async Task DownloadVideoAsync_Explode(IDownloadUiNotifier notifier, DownloadState state)
         {
-            form.ClearVideoUrlTextbox();
+            notifier.ClearVideoUrlTextbox();
 
             var progress = new Progress<double>(p =>
             {
@@ -253,9 +253,9 @@ namespace Robin
                     logger.Error(e, $"Download failed for video: {state.VideoId}");
                     RobinUtils.DisplayAndLogException(e);
 
-                    form.UpdateDownloadStatus(state.ListViewItem, RobinVideoStatus.Failed);
-                    form.CancelProgressBarForVideo(state);
-                    form.DisableCancelButton(state.VideoTitle);
+                    notifier.UpdateDownloadStatus(state.ListViewItem, RobinVideoStatus.Failed);
+                    notifier.CancelProgressBarForVideo(state);
+                    notifier.DisableCancelButton(state.VideoTitle);
                     CleanupPartialFile(state.FilePath);
 
                     throw;
@@ -266,7 +266,7 @@ namespace Robin
             // A failure here must not delete the successfully-saved file.
             try
             {
-                form.NotifyDownloadFinished(state);
+                notifier.NotifyDownloadFinished(state);
             }
             catch (Exception e)
             {

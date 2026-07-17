@@ -5,6 +5,6 @@ namespace Robin
     internal interface YouTubeVideoDownloader
     {
         ValueTask<string> GetVideoTitle(string url);
-        Task DownloadVideo(RobinForm form, string url, DownloadState state);
+        Task DownloadVideo(IDownloadUiNotifier notifier, string url, DownloadState state);
     }
 }

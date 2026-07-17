@@ -22,7 +22,7 @@ namespace Robin.Tests.Fakes
             var fake = new FakeYouTubeVideoDownloader();
             using var state = new DownloadState();
 
-            await fake.DownloadVideo(form: null, url: "https://youtu.be/abc", state: state);
+            await fake.DownloadVideo(notifier: null, url: "https://youtu.be/abc", state: state);
 
             state.IsCompleted.Should().BeTrue();
             fake.DownloadVideoCalls.Should().ContainSingle().Which.Should().Be("https://youtu.be/abc");

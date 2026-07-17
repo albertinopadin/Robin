@@ -15,7 +15,7 @@ namespace Robin.Tests.Fakes
             return new ValueTask<string>(NextTitle);
         }
 
-        public Task DownloadVideo(RobinForm form, string url, DownloadState state)
+        public Task DownloadVideo(IDownloadUiNotifier notifier, string url, DownloadState state)
         {
             DownloadVideoCalls.Add(url);
             state.IsCompleted = true;

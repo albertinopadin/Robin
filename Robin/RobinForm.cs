@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 
 namespace Robin
 {
-    public partial class RobinForm : Form
+    public partial class RobinForm : Form, IDownloadUiNotifier
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static string baseFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);

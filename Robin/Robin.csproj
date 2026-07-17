@@ -295,6 +295,7 @@
   <ItemGroup>
     <Compile Include="ColorBar.cs" />
     <Compile Include="DownloadState.cs" />
+    <Compile Include="IDownloadUiNotifier.cs" />
     <Compile Include="RobinForm.cs">
       <SubType>Form</SubType>
     </Compile>
