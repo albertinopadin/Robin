@@ -295,8 +295,11 @@
   <ItemGroup>
     <Compile Include="ColorBar.cs" />
     <Compile Include="DownloadState.cs" />
+    <Compile Include="FFmpegPathResolver.cs" />
     <Compile Include="IDownloadUiNotifier.cs" />
+    <Compile Include="IFileSystem.cs" />
     <Compile Include="IYoutubeClientAdapter.cs" />
+    <Compile Include="RealFileSystem.cs" />
     <Compile Include="YoutubeClientAdapter.cs" />
     <Compile Include="RobinForm.cs">
       <SubType>Form</SubType>
