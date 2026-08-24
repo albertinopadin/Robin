@@ -11,20 +11,17 @@ using YoutubeExplode.Videos.Streams;
 
 namespace Robin
 {
-    internal class YouTubeExplodeVideoDownloader : YouTubeVideoDownloader
+    internal class YouTubeExplodeVideoDownloader : VideoDownloaderBase
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private static readonly HttpClient sharedHttpClient = CreateSharedHttpClient();
 
         private readonly IYoutubeClientAdapter client;
-        private readonly string baseFilePath;
         private readonly string ffmpegPath;
 
         private readonly ConcurrentDictionary<string, YoutubeExplode.Videos.Video> videoInfoCache
             = new ConcurrentDictionary<string, YoutubeExplode.Videos.Video>();
-
-        private const int ProgressThrottleMs = 100;
 
         private static HttpClient CreateSharedHttpClient()
         {
@@ -48,20 +45,20 @@ namespace Robin
 
         // Test-visible constructor ([InternalsVisibleTo("Robin.Tests")] grants access).
         internal YouTubeExplodeVideoDownloader(string baseFilePath, IYoutubeClientAdapter client, string ffmpegPath)
+            : base(baseFilePath)
         {
-            this.baseFilePath = baseFilePath;
             this.client = client;
             this.ffmpegPath = ffmpegPath;
         }
 
-        public async ValueTask<string> GetVideoTitle(string url)
+        public override async ValueTask<string> GetVideoTitle(string url)
         {
             var videoInfo = await client.GetVideoAsync(url).ConfigureAwait(false);
             videoInfoCache[url] = videoInfo;
             return videoInfo.Title;
         }
 
-        public async Task DownloadVideo(IDownloadUiNotifier notifier, string url, DownloadState state)
+        public override async Task DownloadVideo(IDownloadUiNotifier notifier, string url, DownloadState state)
         {
             notifier.SetCursorLoading();
             try
@@ -136,12 +133,6 @@ namespace Robin
             await DownloadVideo_Explode(notifier, state).ConfigureAwait(false);
         }
 
-        internal static string MakeValidVideoTitle(string rawVideoTitle)
-        {
-            logger.Info($"Raw video title: {rawVideoTitle}");
-            return string.Concat(rawVideoTitle.Split(Path.GetInvalidFileNameChars())).Trim();
-        }
-
         private async Task DownloadVideo_Explode(IDownloadUiNotifier notifier, DownloadState state)
         {
             notifier.SetVideoInfo(new RobinVideoInfo(state.VideoTitle,
@@ -176,33 +167,14 @@ namespace Robin
             notifier.CleanupDownload(state.VideoTitle);
         }
 
-        private void CleanupPartialFile(string videoPath)
-        {
-            if (File.Exists(videoPath))
-            {
-                try
-                {
-                    File.Delete(videoPath);
-                    logger.Info($"Deleted partial file: {videoPath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error($"Failed to delete partial file {videoPath}: {ex.Message}");
-                }
-            }
-        }
-
         private async Task DownloadVideoAsync_Explode(IDownloadUiNotifier notifier, DownloadState state)
         {
             notifier.ClearVideoUrlTextbox();
 
             var progress = new Progress<double>(p =>
             {
-                int now = Environment.TickCount;
                 bool isFinal = p >= 1.0;
-                if (!isFinal && now - state.LastProgressTickMs < ProgressThrottleMs) return;
-                state.LastProgressTickMs = now;
-
+                if (!ShouldReportProgress(state, isFinal)) return;
                 int value = (int)(p * state.SizeInMegabytes);
                 notifier.ReportDownloadProgress(state, value);
             });

@@ -53,6 +53,13 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.downloadEngineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ytdlpEngineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.youtubeExplodeEngineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.updateYtDlpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.updateDenoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fileMenuSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.fileMenuSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.label7 = new System.Windows.Forms.Label();
             this.label_appVersion = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
@@ -257,6 +264,11 @@
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.downloadEngineToolStripMenuItem,
+            this.fileMenuSeparator1,
+            this.updateYtDlpToolStripMenuItem,
+            this.updateDenoToolStripMenuItem,
+            this.fileMenuSeparator2,
             this.checkForUpdatesToolStripMenuItem});
             this.fileToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -269,9 +281,56 @@
             this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
             this.checkForUpdatesToolStripMenuItem.Text = "Check for Updates";
             this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
-            // 
+            //
+            // downloadEngineToolStripMenuItem
+            //
+            this.downloadEngineToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ytdlpEngineToolStripMenuItem,
+            this.youtubeExplodeEngineToolStripMenuItem});
+            this.downloadEngineToolStripMenuItem.Name = "downloadEngineToolStripMenuItem";
+            this.downloadEngineToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
+            this.downloadEngineToolStripMenuItem.Text = "Download Engine";
+            //
+            // ytdlpEngineToolStripMenuItem
+            //
+            this.ytdlpEngineToolStripMenuItem.Name = "ytdlpEngineToolStripMenuItem";
+            this.ytdlpEngineToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
+            this.ytdlpEngineToolStripMenuItem.Text = "yt-dlp (recommended)";
+            this.ytdlpEngineToolStripMenuItem.Click += new System.EventHandler(this.ytdlpEngineToolStripMenuItem_Click);
+            //
+            // youtubeExplodeEngineToolStripMenuItem
+            //
+            this.youtubeExplodeEngineToolStripMenuItem.Name = "youtubeExplodeEngineToolStripMenuItem";
+            this.youtubeExplodeEngineToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
+            this.youtubeExplodeEngineToolStripMenuItem.Text = "YouTube Explode";
+            this.youtubeExplodeEngineToolStripMenuItem.Click += new System.EventHandler(this.youtubeExplodeEngineToolStripMenuItem_Click);
+            //
+            // updateYtDlpToolStripMenuItem
+            //
+            this.updateYtDlpToolStripMenuItem.Name = "updateYtDlpToolStripMenuItem";
+            this.updateYtDlpToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
+            this.updateYtDlpToolStripMenuItem.Text = "Update yt-dlp";
+            this.updateYtDlpToolStripMenuItem.Click += new System.EventHandler(this.updateYtDlpToolStripMenuItem_Click);
+            //
+            // updateDenoToolStripMenuItem
+            //
+            this.updateDenoToolStripMenuItem.Name = "updateDenoToolStripMenuItem";
+            this.updateDenoToolStripMenuItem.Size = new System.Drawing.Size(370, 46);
+            this.updateDenoToolStripMenuItem.Text = "Update Deno (JS runtime)";
+            this.updateDenoToolStripMenuItem.Click += new System.EventHandler(this.updateDenoToolStripMenuItem_Click);
+            //
+            // fileMenuSeparator1
+            //
+            this.fileMenuSeparator1.Name = "fileMenuSeparator1";
+            this.fileMenuSeparator1.Size = new System.Drawing.Size(367, 6);
+            //
+            // fileMenuSeparator2
+            //
+            this.fileMenuSeparator2.Name = "fileMenuSeparator2";
+            this.fileMenuSeparator2.Size = new System.Drawing.Size(367, 6);
+            //
             // label7
-            // 
+            //
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(1163, 9);
             this.label7.Name = "label7";
@@ -345,6 +404,13 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem downloadEngineToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem ytdlpEngineToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem youtubeExplodeEngineToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem updateYtDlpToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem updateDenoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator fileMenuSeparator1;
+        private System.Windows.Forms.ToolStripSeparator fileMenuSeparator2;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label_appVersion;
         private System.Windows.Forms.ColumnHeader locationHeader;

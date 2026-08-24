@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 
 namespace Robin
 {
-    public partial class RobinForm : Form, IDownloadUiNotifier
+    public partial class RobinForm : Form, IDownloadUiNotifier, IYtDlpSetupUi
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static string baseFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
@@ -17,7 +17,7 @@ namespace Robin
         private static int videoListViewItemDownloadStatus = 1;
         private static int videoListViewItemDownloadedLocation = 2;
 
-        YouTubeVideoDownloader videoDownloader = new YouTubeExplodeVideoDownloader(baseFilePath);
+        YouTubeVideoDownloader videoDownloader = DownloaderFactory.Create(baseFilePath, EngineSettings.Get());
         private ConcurrentDictionary<string, DownloadState> activeDownloads = new ConcurrentDictionary<string, DownloadState>();
 
         public RobinForm()
@@ -26,6 +26,29 @@ namespace Robin
             DisplayAppVersion();
             SetDownloadListClickHandler();
             this.FormClosing += RobinForm_FormClosing;
+            this.Load += RobinForm_Load;
+            this.Shown += RobinForm_Shown;
+        }
+
+        private void RobinForm_Load(object sender, EventArgs e) => SyncEngineMenuChecks();
+
+        // Shown (not Load): the main window is painted first, so the first-run
+        // consent popup / self-update popup appear over a visible app.
+        private async void RobinForm_Shown(object sender, EventArgs e)
+        {
+            if (EngineSettings.Get() != EngineSettings.YtDlp) return;
+            YtDlpSetupResult result = await YtDlpBootstrap.EnsureReadyAsync(this);
+            if (result == YtDlpSetupResult.Ready) return;
+
+            if (result == YtDlpSetupResult.Failed)
+            {
+                MessageBox.Show(this,
+                    "Downloading the yt-dlp helper programs failed — switching to the " +
+                    "YouTube Explode engine.\nYou can retry via File > Download Engine > " +
+                    "yt-dlp. Details: robin_log.txt.",
+                    "Robin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            SwitchEngine(EngineSettings.Explode);   // Declined or Failed
         }
 
         private void RobinForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -569,6 +592,110 @@ namespace Robin
             logger.Info("[checkForUpdatesToolStripMenuItem_Click] Application Product Version: {0}",
                 Application.ProductVersion);
             RobinUpdater.InstallUpdateSyncWithInfo();
+        }
+
+        // --- Download engine selection (File > Download Engine) ---
+
+        private async void ytdlpEngineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Same bootstrap gate as startup: while the binaries are missing this
+            // re-asks the first-run question; only a Ready result actually switches.
+            YtDlpSetupResult result = await YtDlpBootstrap.EnsureReadyAsync(this);
+            if (result == YtDlpSetupResult.Ready)
+            {
+                SwitchEngine(EngineSettings.YtDlp);
+                return;
+            }
+            if (result == YtDlpSetupResult.Failed)
+            {
+                MessageBox.Show(this,
+                    "Downloading the yt-dlp helper programs failed; staying on the current " +
+                    "engine. Details: robin_log.txt.",
+                    "Robin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            SyncEngineMenuChecks();   // Declined/Failed: engine and menu checks stay as they were
+        }
+
+        private void youtubeExplodeEngineToolStripMenuItem_Click(object sender, EventArgs e)
+            => SwitchEngine(EngineSettings.Explode);
+
+        private void SwitchEngine(string engine)
+        {
+            EngineSettings.Set(engine);
+            videoDownloader = DownloaderFactory.Create(baseFilePath, engine);
+            SyncEngineMenuChecks();
+            logger.Info($"Download engine switched to: {EngineSettings.DisplayName(engine)}");
+        }
+
+        private void SyncEngineMenuChecks()
+        {
+            string engine = EngineSettings.Get();
+            ytdlpEngineToolStripMenuItem.Checked = engine == EngineSettings.YtDlp;
+            youtubeExplodeEngineToolStripMenuItem.Checked = engine == EngineSettings.Explode;
+        }
+
+        // --- IYtDlpSetupUi: the popups YtDlpBootstrap drives ---
+        // Implemented explicitly: RobinForm is public but the seam's types are
+        // internal, so public interface methods would trip CS0051.
+
+        bool IYtDlpSetupUi.ConfirmFirstRunDownload()
+            => MessageBox.Show(this,
+                   "The yt-dlp download engine needs two helper programs, downloaded once " +
+                   "into %LOCALAPPDATA%\\Robin:\n\n" +
+                   "    •  yt-dlp  (~17 MB)\n" +
+                   "    •  Deno JavaScript runtime  (~40 MB)\n\n" +
+                   "Download them now?\n" +
+                   "Choosing No switches the download engine to YouTube Explode.",
+                   "Robin — set up yt-dlp",
+                   MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+
+        Task IYtDlpSetupUi.RunWithProgressAsync(string title, BinaryProgressJob[] jobs, bool marquee)
+            => RunWithProgressPopup(title, jobs, marquee);
+
+        private Task RunWithProgressPopup(string title, BinaryProgressJob[] jobs, bool marquee)
+        {
+            using (var dlg = new BinaryDownloadProgressForm(title, jobs, marquee))
+            {
+                dlg.ShowDialog(this);   // modal; the dialog closes itself when the jobs finish
+                if (dlg.Error != null)
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(dlg.Error).Throw();
+            }
+            return Task.CompletedTask;
+        }
+
+        // --- Force-update menu items (File > Update yt-dlp / Update Deno) ---
+
+        private async void updateYtDlpToolStripMenuItem_Click(object sender, EventArgs e)
+            => await RunBinaryUpdate("yt-dlp", updateYtDlpToolStripMenuItem,
+                                     (r, p) => r.DownloadYtDlpAsync(p));
+
+        private async void updateDenoToolStripMenuItem_Click(object sender, EventArgs e)
+            => await RunBinaryUpdate("Deno", updateDenoToolStripMenuItem,
+                                     (r, p) => r.DownloadDenoAsync(p));
+
+        // The force path re-downloads the binary, so the popup shows real percentages.
+        private async Task RunBinaryUpdate(string name, ToolStripMenuItem item,
+                                           Func<YtDlpPathResolver, IProgress<double>, Task> update)
+        {
+            item.Enabled = false;
+            try
+            {
+                var resolver = YtDlpPathResolver.Default();
+                await RunWithProgressPopup($"Robin — updating {name}",
+                    new[] { new BinaryProgressJob(name, p => update(resolver, p)) },
+                    marquee: false);
+                MessageBox.Show(this, $"{name} updated to the latest version.", "Robin",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"{name} force-update failed.");
+                RobinUtils.DisplayAndLogException(ex);
+            }
+            finally
+            {
+                item.Enabled = true;
+            }
         }
     }
 }
